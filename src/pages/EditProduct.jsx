@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
 import { useProductStore, CATEGORIES } from '../hooks/useProducts';
 import ProductForm from '../components/product/ProductForm';
+import { compressImage } from '../utils/image';
 
 export default function EditProduct() {
   const { id } = useParams();
@@ -46,11 +47,13 @@ export default function EditProduct() {
   const handleSubmit = async (formData, newImages, existingImages) => {
     setSaving(true);
     try {
-      // 새 이미지 업로드
-      const newImageUrls = [];
-      for (const image of newImages) {
-        const url = await uploadImage(image, user.id);
-        newImageUrls.push(url);
+      // 새 이미지 압축 후 병렬 업로드
+      let newImageUrls = [];
+      if (newImages.length > 0) {
+        const compressedImages = await Promise.all(newImages.map((img) => compressImage(img)));
+        newImageUrls = await Promise.all(
+          compressedImages.map((img) => uploadImage(img, user.id))
+        );
       }
 
       // 기존 이미지 (삭제된 것 제외) + 새 이미지

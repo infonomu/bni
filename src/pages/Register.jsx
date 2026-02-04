@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
 import { useProductStore, CATEGORIES } from '../hooks/useProducts';
 import ProductForm from '../components/product/ProductForm';
+import { compressImage } from '../utils/image';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -25,14 +26,13 @@ export default function Register() {
     try {
       console.log('상품 등록 시작', { formData, images, userId: user.id });
 
-      // 이미지 업로드
-      const imageUrls = [];
-      for (const image of images) {
-        console.log('이미지 업로드 중...', image.name);
-        const url = await uploadImage(image, user.id);
-        console.log('이미지 업로드 완료', url);
-        imageUrls.push(url);
-      }
+      // 이미지 압축 후 병렬 업로드
+      console.log('이미지 압축 및 업로드 중...');
+      const compressedImages = await Promise.all(images.map((img) => compressImage(img)));
+      const imageUrls = await Promise.all(
+        compressedImages.map((img) => uploadImage(img, user.id))
+      );
+      console.log('이미지 업로드 완료', imageUrls);
 
       console.log('상품 생성 중...', { ...formData, seller_id: user.id, images: imageUrls });
 
