@@ -6,7 +6,7 @@ import CategoryFilter from '../components/product/CategoryFilter';
 import SearchBar from '../components/common/SearchBar';
 
 export default function Home() {
-  const { products, loading, fetchProducts, category, setCategory } = useProductStore();
+  const { products, loading, error, fetchProducts, category, setCategory, clearError } = useProductStore();
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
@@ -54,6 +54,30 @@ export default function Home() {
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent" />
             <p className="mt-4 text-brown/60">상품을 불러오는 중...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <span className="text-6xl">⚠️</span>
+            {error === 'session_expired' ? (
+              <>
+                <p className="mt-4 text-brown/60">세션이 만료되었습니다.</p>
+                <p className="text-sm text-brown/40">페이지를 새로고침하거나 다시 로그인해주세요.</p>
+              </>
+            ) : (
+              <>
+                <p className="mt-4 text-brown/60">상품을 불러오는 중 오류가 발생했습니다.</p>
+                <p className="text-sm text-brown/40">잠시 후 다시 시도해주세요.</p>
+              </>
+            )}
+            <button
+              onClick={() => {
+                clearError();
+                fetchProducts();
+              }}
+              className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              다시 시도
+            </button>
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-12">

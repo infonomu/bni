@@ -15,6 +15,7 @@ export default function MyProducts() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('products');
 
   useEffect(() => {
@@ -24,31 +25,52 @@ export default function MyProducts() {
     }
   }, [authLoading, user, navigate]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
+  const fetchData = async () => {
+    if (!user) return;
 
-      try {
-        // 내 상품 조회
-        const { supabase } = await import('../lib/supabase');
-        const { data: productsData } = await supabase
+    setLoading(true);
+    setError(null);
+    try {
+      // 내 상품 조회 (자동 재시도 및 세션 갱신 포함)
+      const { supabase, executeWithRetry } = await import('../lib/supabase');
+      const { data: productsData, error: productsError } = await executeWithRetry(
+        () => supabase
           .from('products')
           .select('*')
           .eq('seller_id', user.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+      );
 
-        setProducts(productsData || []);
+      if (productsError) throw productsError;
 
-        // 내 상품에 대한 주문 조회
-        const ordersData = await getSellerOrders(user.id);
-        setOrders(ordersData || []);
-      } catch (error) {
-        console.error('데이터 조회 에러:', error);
-      } finally {
-        setLoading(false);
+      setProducts(productsData || []);
+
+      // 내 상품에 대한 주문 조회
+      const ordersData = await getSellerOrders(user.id);
+      setOrders(ordersData || []);
+    } catch (error) {
+      console.error('데이터 조회 에러:', error);
+
+      // 재시도 후에도 실패한 경우 - 세션/인증 관련 에러 확인
+      const isAuthError = error.message?.includes('JWT') ||
+                          error.message?.includes('token') ||
+                          error.message?.includes('session') ||
+                          error.code === 'PGRST301' ||
+                          error.status === 401 ||
+                          error.status === 403;
+
+      if (isAuthError) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+      } else {
+        setError('fetch_error');
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, [user]);
 
@@ -96,6 +118,22 @@ export default function MyProducts() {
     return (
       <div className="flex justify-center items-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center py-20">
+        <span className="text-6xl">⚠️</span>
+        <p className="mt-4 text-brown/60">데이터를 불러오는 중 오류가 발생했습니다.</p>
+        <p className="text-sm text-brown/40">잠시 후 다시 시도해주세요.</p>
+        <button
+          onClick={fetchData}
+          className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          다시 시도
+        </button>
       </div>
     );
   }

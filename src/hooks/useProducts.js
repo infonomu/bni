@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
+import { supabase, executeWithRetry } from '../lib/supabase';
 
 export const CATEGORIES = [
   { id: 'all', name: '전체', emoji: '🎁' },
@@ -17,6 +17,7 @@ let currentFetchId = 0;
 export const useProductStore = create((set, get) => ({
   products: [],
   loading: false,
+  error: null,
   category: 'all',
   searchQuery: '',
   sortBy: 'created_at',
@@ -25,44 +26,61 @@ export const useProductStore = create((set, get) => ({
   setCategory: (category) => set({ category }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setSortBy: (sortBy) => set({ sortBy }),
+  clearError: () => set({ error: null }),
 
   fetchProducts: async () => {
     const fetchId = ++currentFetchId;
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
-      let query = supabase
-        .from('products')
-        .select('*, profiles(name, company, chapter, specialty, phone)')
-        .eq('is_active', true);
-
       const { category, searchQuery, sortBy, sortOrder } = get();
 
-      if (category && category !== 'all') {
-        query = query.eq('category', category);
-      }
+      // executeWithRetry로 자동 재시도 및 세션 갱신
+      const { data, error } = await executeWithRetry(async () => {
+        let query = supabase
+          .from('products')
+          .select('*, profiles(name, company, chapter, specialty, phone)')
+          .eq('is_active', true);
 
-      if (searchQuery) {
-        query = query.or(
-          `name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
-        );
-      }
+        if (category && category !== 'all') {
+          query = query.eq('category', category);
+        }
 
-      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+        if (searchQuery) {
+          query = query.or(
+            `name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+          );
+        }
 
-      const { data, error } = await query;
+        query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+        return await query;
+      });
 
       // 이 요청이 가장 최신 요청인지 확인
       if (fetchId !== currentFetchId) return;
 
       if (error) throw error;
 
-      set({ products: data || [], loading: false });
+      set({ products: data || [], loading: false, error: null });
     } catch (error) {
       // 이 요청이 가장 최신 요청인지 확인
       if (fetchId !== currentFetchId) return;
 
       console.error('상품 조회 에러:', error);
-      set({ products: [], loading: false });
+
+      // 세션/인증 관련 에러 확인 (재시도 후에도 실패한 경우)
+      const isAuthError = error.message?.includes('JWT') ||
+                          error.message?.includes('token') ||
+                          error.message?.includes('session') ||
+                          error.code === 'PGRST301' ||
+                          error.status === 401 ||
+                          error.status === 403;
+
+      set({
+        products: [],
+        loading: false,
+        error: isAuthError ? 'session_expired' : 'fetch_error'
+      });
     }
   },
 
