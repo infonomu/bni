@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineXMark, HiOutlineChevronLeft, HiOutlineChevronRight, HiOutlineShare, HiOutlineGlobeAlt } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import { CATEGORIES } from '../../hooks/useProducts';
-import { formatPrice } from '../../utils/format';
+import { formatPriceRange } from '../../utils/format';
 import OrderForm from '../order/OrderForm';
 
 export default function ProductModal({ product, onClose }) {
@@ -118,7 +118,7 @@ export default function ProductModal({ product, onClose }) {
           <div className="p-6">
             <h2 className="font-heading text-2xl font-bold mb-2">{product.name}</h2>
             <p className="text-primary-600 text-2xl font-bold mb-2">
-              {formatPrice(product.price)}
+              {formatPriceRange(product.price, product.price_max)}
             </p>
 
             {/* 사이트 URL */}

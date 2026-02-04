@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { CATEGORIES } from '../../hooks/useProducts';
-import { formatPrice } from '../../utils/format';
+import { formatPriceRange } from '../../utils/format';
 
 export default function ProductCard({ product, index, onClick }) {
   const category = CATEGORIES.find(c => c.id === product.category);
@@ -42,7 +42,7 @@ export default function ProductCard({ product, index, onClick }) {
         </p>
         <div className="flex items-center justify-between">
           <p className="text-primary-600 font-bold text-lg">
-            {formatPrice(product.price)}
+            {formatPriceRange(product.price, product.price_max)}
           </p>
           <p className="text-sm text-brown/50">
             {product.profiles?.name} · {product.profiles?.company}

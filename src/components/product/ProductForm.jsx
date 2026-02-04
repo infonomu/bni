@@ -13,6 +13,7 @@ export default function ProductForm({
     name: initialData?.name || '',
     description: initialData?.description || '',
     price: initialData?.price || '',
+    price_max: initialData?.price_max || '',
     category: initialData?.category || 'food',
     site_url: initialData?.site_url || '',
     accept_email_order: initialData?.accept_email_order ?? true,
@@ -55,10 +56,20 @@ export default function ProductForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const priceMax = formData.price_max ? parseInt(formData.price_max, 10) : null;
+    const price = parseInt(formData.price, 10);
+
+    // 최대 가격이 최소 가격보다 작으면 에러
+    if (priceMax && priceMax < price) {
+      alert('최대 가격은 최소 가격보다 크거나 같아야 합니다.');
+      return;
+    }
+
     onSubmit(
       {
         ...formData,
-        price: parseInt(formData.price, 10),
+        price,
+        price_max: priceMax,
       },
       images,
       existingImages
@@ -108,20 +119,37 @@ export default function ProductForm({
         <label className="block text-sm font-medium mb-2">
           가격 <span className="text-primary-600">*</span>
         </label>
-        <div className="relative">
-          <input
-            type="text"
-            value={formatPrice(String(formData.price))}
-            onChange={(e) => {
-              const numericValue = e.target.value.replace(/[^0-9]/g, '');
-              setFormData({ ...formData, price: numericValue });
-            }}
-            placeholder="0"
-            className="w-full px-4 py-3 pr-12 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-            required
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-brown/50">원</span>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={formatPrice(String(formData.price))}
+              onChange={(e) => {
+                const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                setFormData({ ...formData, price: numericValue });
+              }}
+              placeholder="최소 가격"
+              className="w-full px-4 py-3 pr-12 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+              required
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-brown/50">원</span>
+          </div>
+          <span className="text-brown/50">~</span>
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={formatPrice(String(formData.price_max))}
+              onChange={(e) => {
+                const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                setFormData({ ...formData, price_max: numericValue });
+              }}
+              placeholder="최대 가격 (선택)"
+              className="w-full px-4 py-3 pr-12 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-brown/50">원</span>
+          </div>
         </div>
+        <p className="text-xs text-brown/50 mt-1">가격이 범위인 경우 최대 가격도 입력하세요</p>
       </div>
 
       {/* 카테고리 */}

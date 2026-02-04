@@ -12,6 +12,22 @@ export function formatPrice(price) {
 }
 
 /**
+ * 가격 범위를 포맷팅
+ * @param {number} price - 최소 가격
+ * @param {number|null} priceMax - 최대 가격 (없으면 단일 가격)
+ * @returns {string} 포맷팅된 가격 문자열
+ */
+export function formatPriceRange(price, priceMax) {
+  if (!price && price !== 0) return '가격 미정';
+  const minPrice = formatPrice(price);
+  if (!priceMax || priceMax === price) {
+    return minPrice;
+  }
+  const maxPrice = formatPrice(priceMax);
+  return `${minPrice} ~ ${maxPrice}`;
+}
+
+/**
  * 날짜를 한국어 형식으로 포맷팅
  * @param {string|Date} date - 날짜
  * @returns {string} 포맷팅된 날짜 문자열
