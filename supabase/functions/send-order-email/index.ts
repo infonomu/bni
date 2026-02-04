@@ -286,7 +286,7 @@ function getBuyerEmailHtml(order: any, product: any, seller: any, totalPrice: st
               <!-- Seller Info Box -->
               <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #FDF6ED; border-radius: 12px; margin-bottom: 20px;">
                 <tr>
-                  <td style="padding: 15px 20px;${seller.company ? ' border-bottom: 1px solid #eee;' : ''}">
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
                     <table width="100%">
                       <tr>
                         <td style="color: #666; font-size: 14px;">판매자</td>
@@ -297,11 +297,35 @@ function getBuyerEmailHtml(order: any, product: any, seller: any, totalPrice: st
                 </tr>
                 ${seller.company ? `
                 <tr>
-                  <td style="padding: 15px 20px;">
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
                     <table width="100%">
                       <tr>
                         <td style="color: #666; font-size: 14px;">회사/브랜드</td>
                         <td style="text-align: right; font-weight: 600; color: #2D1B14;">${seller.company}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                ` : ""}
+                ${seller.email ? `
+                <tr>
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">이메일</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${seller.email}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                ` : ""}
+                ${seller.phone ? `
+                <tr>
+                  <td style="padding: 15px 20px;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">연락처</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${seller.phone}</td>
                       </tr>
                     </table>
                   </td>
@@ -381,7 +405,7 @@ serve(async (req: any) => {
     // 주문 + 상품 + 판매자 정보 조회
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("*, products(*, profiles(name, company, email))")
+      .select("*, products(*, profiles(name, company, email, phone))")
       .eq("id", order_id)
       .single();
 
