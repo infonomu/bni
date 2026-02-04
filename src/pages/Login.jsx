@@ -69,9 +69,8 @@ export default function Login() {
           address: formData.address,
           address_detail: formData.address_detail,
         });
-        toast.success('회원가입 완료! 로그인해주세요.');
-        setIsSignUp(false);
-        setFormData({ ...formData, password: '' });
+        toast.success('회원가입 완료!');
+        navigate('/profile');
       } else {
         await signIn(formData.email, formData.password);
         toast.success('로그인 성공!');

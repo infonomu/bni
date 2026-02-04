@@ -11,24 +11,18 @@ export const useOrders = () => {
 
     if (orderError) throw orderError;
 
-    // Edge Function 호출하여 이메일 발송
-    try {
-      console.log('이메일 발송 함수 호출 시작, order_id:', order.id);
-      const { data: emailData, error: emailError } = await supabase.functions.invoke(
-        'send-order-email',
-        {
-          body: { order_id: order.id },
-        }
-      );
-
-      console.log('이메일 발송 결과:', { emailData, emailError });
-
-      if (emailError) {
-        console.error('이메일 발송 에러:', emailError);
+    // Edge Function 호출하여 이메일 발송 (백그라운드로 처리, 주문 완료를 블로킹하지 않음)
+    supabase.functions.invoke('send-order-email', {
+      body: { order_id: order.id },
+    }).then(({ data, error }) => {
+      if (error) {
+        console.error('이메일 발송 에러:', error);
+      } else {
+        console.log('이메일 발송 완료:', data);
       }
-    } catch (e) {
+    }).catch((e) => {
       console.error('이메일 함수 호출 에러:', e);
-    }
+    });
 
     return order;
   };

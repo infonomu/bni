@@ -54,84 +54,151 @@ function getSellerEmailHtml(order: any, product: any, totalPrice: string): strin
 <html>
 <head>
   <meta charset="utf-8">
-  <style>
-    body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background-color: #FDF6ED; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #C41E3A, #a01830); color: white; padding: 30px; text-align: center; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .content { padding: 30px; }
-    .info-box { background: #FDF6ED; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { color: #666; }
-    .info-value { font-weight: 600; color: #2D1B14; }
-    .total { background: #C41E3A; color: white; padding: 15px 20px; border-radius: 12px; text-align: center; font-size: 20px; font-weight: bold; margin: 20px 0; }
-    .footer { background: #2D1B14; color: #FDF6ED; padding: 20px; text-align: center; font-size: 12px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div style="font-size: 40px;">🏮🧧</div>
-      <h1>BNI 마포 설선물관</h1>
-      <p style="margin: 10px 0 0; opacity: 0.9;">새로운 주문이 접수되었습니다!</p>
-    </div>
-    <div class="content">
-      <h2 style="margin-top: 0; color: #2D1B14;">📦 주문 상품</h2>
-      <div class="info-box">
-        <div class="info-row">
-          <span class="info-label">상품명</span>
-          <span class="info-value">${product.name}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">단가</span>
-          <span class="info-value">${product.price.toLocaleString("ko-KR")}원</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">수량</span>
-          <span class="info-value">${order.quantity}개</span>
-        </div>
-      </div>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FDF6ED; margin: 0; padding: 20px;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto;">
+    <tr>
+      <td>
+        <!-- Header -->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: linear-gradient(135deg, #C41E3A, #a01830); border-radius: 16px 16px 0 0;">
+          <tr>
+            <td style="padding: 30px; text-align: center;">
+              <div style="font-size: 40px; line-height: 1;">🏮🧧</div>
+              <h1 style="margin: 10px 0 0; font-size: 24px; color: white;">BNI 마포 설선물관</h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">새로운 주문이 접수되었습니다!</p>
+            </td>
+          </tr>
+        </table>
 
-      <div class="total">총 금액: ${totalPrice}원</div>
+        <!-- Content -->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: white;">
+          <tr>
+            <td style="padding: 30px;">
+              <h2 style="margin: 0 0 15px; color: #2D1B14; font-size: 18px;">📦 주문 상품</h2>
 
-      <h2 style="color: #2D1B14;">👤 주문자 정보</h2>
-      <div class="info-box">
-        <div class="info-row">
-          <span class="info-label">이름</span>
-          <span class="info-value">${order.buyer_name}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">이메일</span>
-          <span class="info-value">${order.buyer_email || "-"}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">연락처</span>
-          <span class="info-value">${order.buyer_phone}</span>
-        </div>
-        ${order.buyer_address ? `
-        <div class="info-row">
-          <span class="info-label">배송지</span>
-          <span class="info-value">${order.buyer_address}</span>
-        </div>
-        ` : ""}
-        ${order.message ? `
-        <div class="info-row">
-          <span class="info-label">요청사항</span>
-          <span class="info-value">${order.message}</span>
-        </div>
-        ` : ""}
-      </div>
+              <!-- Product Info Box -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #FDF6ED; border-radius: 12px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">상품명</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${product.name}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">단가</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${product.price.toLocaleString("ko-KR")}원</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 15px 20px;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">수량</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${order.quantity}개</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-      <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
-        주문 일시: ${new Date(order.created_at).toLocaleString("ko-KR")}
-      </p>
-    </div>
-    <div class="footer">
-      이 주문은 BNI 마포 설선물관을 통해 접수되었습니다.<br>
-      © 2026 BNI 마포 정보람 디렉터
-    </div>
-  </div>
+              <!-- Total -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #C41E3A; border-radius: 12px; margin-bottom: 25px;">
+                <tr>
+                  <td style="padding: 15px 20px; text-align: center; color: white; font-size: 20px; font-weight: bold;">
+                    총 금액: ${totalPrice}원
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="margin: 0 0 15px; color: #2D1B14; font-size: 18px;">👤 주문자 정보</h2>
+
+              <!-- Buyer Info Box -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #FDF6ED; border-radius: 12px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">이름</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${order.buyer_name}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">이메일</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${order.buyer_email || "-"}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 15px 20px;${order.buyer_address || order.message ? ' border-bottom: 1px solid #eee;' : ''}">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">연락처</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${order.buyer_phone}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                ${order.buyer_address ? `
+                <tr>
+                  <td style="padding: 15px 20px;${order.message ? ' border-bottom: 1px solid #eee;' : ''}">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">배송지</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${order.buyer_address}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                ` : ""}
+                ${order.message ? `
+                <tr>
+                  <td style="padding: 15px 20px;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">요청사항</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${order.message}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                ` : ""}
+              </table>
+
+              <p style="color: #666; font-size: 14px; text-align: center; margin: 20px 0 0;">
+                주문 일시: ${new Date(order.created_at).toLocaleString("ko-KR")}
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Footer -->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #2D1B14; border-radius: 0 0 16px 16px;">
+          <tr>
+            <td style="padding: 20px; text-align: center; color: #FDF6ED; font-size: 12px;">
+              이 주문은 BNI 마포 설선물관을 통해 접수되었습니다.<br>
+              © 2025 BNI 마포 정보람 디렉터
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `;
@@ -144,80 +211,133 @@ function getBuyerEmailHtml(order: any, product: any, seller: any, totalPrice: st
 <html>
 <head>
   <meta charset="utf-8">
-  <style>
-    body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background-color: #FDF6ED; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #C41E3A, #a01830); color: white; padding: 30px; text-align: center; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .content { padding: 30px; }
-    .info-box { background: #FDF6ED; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { color: #666; }
-    .info-value { font-weight: 600; color: #2D1B14; }
-    .total { background: #C41E3A; color: white; padding: 15px 20px; border-radius: 12px; text-align: center; font-size: 20px; font-weight: bold; margin: 20px 0; }
-    .footer { background: #2D1B14; color: #FDF6ED; padding: 20px; text-align: center; font-size: 12px; }
-    .notice { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-top: 20px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div style="font-size: 40px;">🏮✨</div>
-      <h1>BNI 마포 설선물관</h1>
-      <p style="margin: 10px 0 0; opacity: 0.9;">주문이 접수되었습니다!</p>
-    </div>
-    <div class="content">
-      <p style="font-size: 16px; color: #2D1B14;">
-        <strong>${order.buyer_name}</strong>님, 주문해주셔서 감사합니다! 🙏
-      </p>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FDF6ED; margin: 0; padding: 20px;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto;">
+    <tr>
+      <td>
+        <!-- Header -->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: linear-gradient(135deg, #C41E3A, #a01830); border-radius: 16px 16px 0 0;">
+          <tr>
+            <td style="padding: 30px; text-align: center;">
+              <div style="font-size: 40px; line-height: 1;">🏮✨</div>
+              <h1 style="margin: 10px 0 0; font-size: 24px; color: white;">BNI 마포 설선물관</h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">주문이 접수되었습니다!</p>
+            </td>
+          </tr>
+        </table>
 
-      <h2 style="color: #2D1B14;">📦 주문 내역</h2>
-      <div class="info-box">
-        <div class="info-row">
-          <span class="info-label">상품명</span>
-          <span class="info-value">${product.name}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">수량</span>
-          <span class="info-value">${order.quantity}개</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">단가</span>
-          <span class="info-value">${product.price.toLocaleString("ko-KR")}원</span>
-        </div>
-      </div>
+        <!-- Content -->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: white;">
+          <tr>
+            <td style="padding: 30px;">
+              <p style="font-size: 16px; color: #2D1B14; margin: 0 0 20px;">
+                <strong>${order.buyer_name}</strong>님, 주문해주셔서 감사합니다! 🙏
+              </p>
 
-      <div class="total">총 금액: ${totalPrice}원</div>
+              <h2 style="margin: 0 0 15px; color: #2D1B14; font-size: 18px;">📦 주문 내역</h2>
 
-      <h2 style="color: #2D1B14;">🏪 판매자 정보</h2>
-      <div class="info-box">
-        <div class="info-row">
-          <span class="info-label">판매자</span>
-          <span class="info-value">${seller.name}</span>
-        </div>
-        ${seller.company ? `
-        <div class="info-row">
-          <span class="info-label">회사/브랜드</span>
-          <span class="info-value">${seller.company}</span>
-        </div>
-        ` : ""}
-      </div>
+              <!-- Order Info Box -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #FDF6ED; border-radius: 12px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">상품명</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${product.name}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 15px 20px; border-bottom: 1px solid #eee;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">수량</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${order.quantity}개</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 15px 20px;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">단가</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${product.price.toLocaleString("ko-KR")}원</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-      <div class="notice">
-        <strong>📌 안내사항</strong><br>
-        판매자가 곧 연락드릴 예정입니다. 문의사항이 있으시면 판매자에게 직접 연락해주세요.
-      </div>
+              <!-- Total -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #C41E3A; border-radius: 12px; margin-bottom: 25px;">
+                <tr>
+                  <td style="padding: 15px 20px; text-align: center; color: white; font-size: 20px; font-weight: bold;">
+                    총 금액: ${totalPrice}원
+                  </td>
+                </tr>
+              </table>
 
-      <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
-        주문 일시: ${new Date(order.created_at).toLocaleString("ko-KR")}
-      </p>
-    </div>
-    <div class="footer">
-      BNI 마포 설선물관을 이용해주셔서 감사합니다.<br>
-      © 2026 BNI 마포 정보람 디렉터
-    </div>
-  </div>
+              <h2 style="margin: 0 0 15px; color: #2D1B14; font-size: 18px;">🏪 판매자 정보</h2>
+
+              <!-- Seller Info Box -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #FDF6ED; border-radius: 12px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 15px 20px;${seller.company ? ' border-bottom: 1px solid #eee;' : ''}">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">판매자</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${seller.name}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                ${seller.company ? `
+                <tr>
+                  <td style="padding: 15px 20px;">
+                    <table width="100%">
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">회사/브랜드</td>
+                        <td style="text-align: right; font-weight: 600; color: #2D1B14;">${seller.company}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                ` : ""}
+              </table>
+
+              <!-- Notice -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 15px;">
+                    <strong style="color: #856404;">📌 안내사항</strong><br>
+                    <span style="color: #856404; font-size: 14px;">판매자가 곧 연락드릴 예정입니다. 문의사항이 있으시면 판매자에게 직접 연락해주세요.</span>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color: #666; font-size: 14px; text-align: center; margin: 20px 0 0;">
+                주문 일시: ${new Date(order.created_at).toLocaleString("ko-KR")}
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Footer -->
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #2D1B14; border-radius: 0 0 16px 16px;">
+          <tr>
+            <td style="padding: 20px; text-align: center; color: #FDF6ED; font-size: 12px;">
+              BNI 마포 설선물관을 이용해주셔서 감사합니다.<br>
+              © 2025 BNI 마포 정보람 디렉터
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `;
@@ -238,7 +358,7 @@ serve(async (req: any) => {
     // @ts-ignore
     const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
     // @ts-ignore
-    const fromEmail = Deno.env.get("FROM_EMAIL") ?? "BNI 마포 설선물관 <noreply@resend.dev>";
+    const fromEmail = "BNI 마포 설선물관 <onboarding@resend.dev>";
 
     if (!resendApiKey) {
       return new Response(
