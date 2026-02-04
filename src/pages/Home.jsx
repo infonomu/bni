@@ -26,14 +26,15 @@ export default function Home() {
           2026 설선물관
         </h2>
         <p className="text-brown/70 max-w-2xl mx-auto">
-          BNI 마포 챕터 멤버들의 특별한 설 선물을 만나보세요.
+          BNI 마포 멤버들의 특별한 설 선물을 만나보세요.
           <br />
           멤버 간 비즈니스 연결로 함께 성장합니다.
         </p>
         <p className="text-brown/60 text-sm max-w-2xl mx-auto mt-4 bg-ivory p-4 rounded-xl">
           설선물관은 쇼핑몰이 아닙니다.<br />
           멤버들의 쇼핑몰에 바로 연결 주문하시거나,<br />
-          이메일로 주문서를 전송하실 수 있습니다.
+          이메일로 주문서를 전송하실 수 있습니다.<br />
+          비회원 주문도 가능합니다.
         </p>
       </section>
 
