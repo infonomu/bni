@@ -222,12 +222,18 @@ export default function ProductModal({ product, onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setShowLightbox(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowLightbox(false);
+            }}
             className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center"
           >
             {/* 닫기 버튼 */}
             <button
-              onClick={() => setShowLightbox(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLightbox(false);
+              }}
               className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
             >
               <HiOutlineXMark className="w-8 h-8" />
