@@ -8,6 +8,7 @@ import OrderForm from '../order/OrderForm';
 
 export default function ProductModal({ product, onClose }) {
   const [currentImage, setCurrentImage] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
   const category = CATEGORIES.find(c => c.id === product.category);
   const images = product.images?.length > 0 ? product.images : [];
 
@@ -77,7 +78,8 @@ export default function ProductModal({ product, onClose }) {
                 <img
                   src={images[currentImage]}
                   alt={product.name}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain cursor-zoom-in"
+                  onClick={() => setShowLightbox(true)}
                 />
                 {images.length > 1 && (
                   <>
@@ -213,6 +215,75 @@ export default function ProductModal({ product, onClose }) {
             </div>
           </div>
         </motion.div>
+
+        {/* 이미지 확대 라이트박스 */}
+        {showLightbox && images.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowLightbox(false)}
+            className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center"
+          >
+            {/* 닫기 버튼 */}
+            <button
+              onClick={() => setShowLightbox(false)}
+              className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
+            >
+              <HiOutlineXMark className="w-8 h-8" />
+            </button>
+
+            {/* 이미지 */}
+            <img
+              src={images[currentImage]}
+              alt={product.name}
+              className="max-w-[95vw] max-h-[95vh] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* 좌우 네비게이션 */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevImage();
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                >
+                  <HiOutlineChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                >
+                  <HiOutlineChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            {/* 이미지 인디케이터 */}
+            {images.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImage(i);
+                    }}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                      i === currentImage ? 'bg-white' : 'bg-white/40'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );
