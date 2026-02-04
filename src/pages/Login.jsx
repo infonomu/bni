@@ -74,7 +74,7 @@ export default function Login() {
       } else {
         await signIn(formData.email, formData.password);
         toast.success('로그인 성공!');
-        navigate('/register');
+        navigate('/');
       }
     } catch (error) {
       if (error.message.includes('Invalid login')) {
