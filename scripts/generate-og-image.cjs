@@ -51,7 +51,7 @@ ctx.fillText('BNI 마포 설선물관', width / 2, 370);
 // 서브 타이틀
 ctx.fillStyle = '#FBBF24'; // amber-400
 ctx.font = '32px sans-serif';
-ctx.fillText('BNI 마포 챕터 멤버들의 특별한 설 선물', width / 2, 430);
+ctx.fillText('BNI 마포 멤버들의 특별한 설 선물', width / 2, 430);
 
 // 하단 태그라인
 ctx.fillStyle = 'rgba(254, 243, 199, 0.7)';
