@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/* BNI 마포 설선물관 커스텀 테마 */
+@theme {
+  /* Primary Color - 레드 */
+  --color-primary-50: #fef2f2;
+  --color-primary-100: #fee2e2;
+  --color-primary-200: #fecaca;
+  --color-primary-300: #fca5a5;
+  --color-primary-400: #f87171;
+  --color-primary-500: #ef4444;
+  --color-primary-600: #C41E3A;
+  --color-primary-700: #b91c1c;
+  --color-primary-800: #991b1b;
+  --color-primary-900: #7f1d1d;
+
+  /* Accent Color - 골드 */
+  --color-accent-50: #fefce8;
+  --color-accent-100: #fef9c3;
+  --color-accent-200: #fef08a;
+  --color-accent-300: #fde047;
+  --color-accent-400: #facc15;
+  --color-accent-500: #C9A96E;
+  --color-accent-600: #b8954f;
+  --color-accent-700: #a78030;
+  --color-accent-800: #8b6914;
+  --color-accent-900: #713f12;
+
+  /* Background - 아이보리 */
+  --color-ivory: #FDF6ED;
+
+  /* Text - 다크 브라운 */
+  --color-brown: #2D1B14;
+
+  /* 폰트 */
+  --font-heading: 'Gowun Batang', serif;
+  --font-body: 'Noto Sans KR', sans-serif;
+}
+
+/* 기본 스타일 */
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-ivory);
+  color: var(--color-brown);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* 플로팅 장식 애니메이션 */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
+}
+
+.floating-decoration {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* 카드 등장 애니메이션 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-ivory);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent-500);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-600);
+}
