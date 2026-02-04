@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../hooks/useAuth';
 import { useOrders } from '../../hooks/useOrders';
@@ -20,6 +20,22 @@ export default function OrderForm({ product, onSuccess }) {
     message: '',
   });
   const [loading, setLoading] = useState(false);
+
+  // profile이 나중에 로드될 때 formData 업데이트 (모바일 네트워크 지연 대응)
+  useEffect(() => {
+    if (profile) {
+      setFormData(prev => ({
+        ...prev,
+        buyer_name: prev.buyer_name || profile.name || '',
+        buyer_email: prev.buyer_email || profile.email || '',
+        buyer_phone: prev.buyer_phone || profile.phone || '',
+        buyer_chapter: prev.buyer_chapter || profile.chapter || '',
+        buyer_postal_code: prev.buyer_postal_code || profile.postal_code || '',
+        buyer_address: prev.buyer_address || profile.address || '',
+        buyer_address_detail: prev.buyer_address_detail || profile.address_detail || '',
+      }));
+    }
+  }, [profile]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
