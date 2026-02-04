@@ -74,6 +74,9 @@ export const useAuthStore = create((set, get) => ({
           specialty: profileData.specialty,
           company: profileData.company,
           phone: profileData.phone,
+          postal_code: profileData.postal_code,
+          address: profileData.address,
+          address_detail: profileData.address_detail,
         });
       if (profileError) console.error('프로필 저장 에러:', profileError);
     }

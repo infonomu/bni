@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../../hooks/useAuth';
 import { useOrders } from '../../hooks/useOrders';
 import { formatPrice } from '../../utils/format';
+import AddressSearch from '../common/AddressSearch';
 
 export default function OrderForm({ product, onSuccess }) {
   const { user, profile } = useAuthStore();
@@ -12,7 +13,9 @@ export default function OrderForm({ product, onSuccess }) {
     buyer_email: profile?.email || '',
     buyer_phone: profile?.phone || '',
     buyer_chapter: profile?.chapter || '',
-    buyer_address: '',
+    buyer_postal_code: profile?.postal_code || '',
+    buyer_address: profile?.address || '',
+    buyer_address_detail: profile?.address_detail || '',
     quantity: 1,
     message: '',
   });
@@ -40,6 +43,11 @@ export default function OrderForm({ product, onSuccess }) {
 
     setLoading(true);
     try {
+      // 기본주소 + 상세주소 조합
+      const fullAddress = [formData.buyer_address, formData.buyer_address_detail]
+        .filter(Boolean)
+        .join(' ');
+
       await createOrder({
         product_id: product.id,
         buyer_id: user?.id || null,
@@ -47,7 +55,7 @@ export default function OrderForm({ product, onSuccess }) {
         buyer_email: formData.buyer_email,
         buyer_phone: formData.buyer_phone,
         buyer_chapter: formData.buyer_chapter,
-        buyer_address: formData.buyer_address,
+        buyer_address: fullAddress,
         quantity: formData.quantity,
         message: formData.message,
       });
@@ -159,13 +167,40 @@ export default function OrderForm({ product, onSuccess }) {
       </div>
 
       {/* 배송지 주소 */}
-      <div>
-        <label className="block text-sm font-medium mb-1">배송지 주소</label>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">배송지 주소</label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={formData.buyer_postal_code}
+            readOnly
+            placeholder="우편번호"
+            className="w-24 px-3 py-2.5 border border-brown/20 rounded-lg bg-gray-50 text-brown/70 text-sm"
+          />
+          <AddressSearch
+            onComplete={({ postalCode, address }) => {
+              setFormData({
+                ...formData,
+                buyer_postal_code: postalCode,
+                buyer_address: address,
+                buyer_address_detail: '',
+              });
+            }}
+            className="text-sm"
+          />
+        </div>
         <input
           type="text"
           value={formData.buyer_address}
-          onChange={(e) => setFormData({ ...formData, buyer_address: e.target.value })}
-          placeholder="실물 배송이 필요한 경우 입력"
+          readOnly
+          placeholder="기본주소 (주소 검색으로 입력)"
+          className="w-full px-4 py-2.5 border border-brown/20 rounded-lg bg-gray-50 text-brown/70"
+        />
+        <input
+          type="text"
+          value={formData.buyer_address_detail}
+          onChange={(e) => setFormData({ ...formData, buyer_address_detail: e.target.value })}
+          placeholder="상세주소 (동/호수 등)"
           className="w-full px-4 py-2.5 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
         />
       </div>

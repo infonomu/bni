@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { HiOutlineEnvelope, HiOutlineLockClosed, HiOutlineUser, HiOutlineBuildingOffice, HiOutlinePhone, HiOutlineBriefcase, HiOutlineUserGroup } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
+import AddressSearch from '../components/common/AddressSearch';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ export default function Login() {
     specialty: '',
     company: '',
     phone: '',
+    postal_code: '',
+    address: '',
+    address_detail: '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -61,6 +65,9 @@ export default function Login() {
           specialty: formData.specialty,
           company: formData.company,
           phone: formData.phone,
+          postal_code: formData.postal_code,
+          address: formData.address,
+          address_detail: formData.address_detail,
         });
         toast.success('회원가입 완료! 로그인해주세요.');
         setIsSignUp(false);
@@ -173,6 +180,43 @@ export default function Login() {
                 />
               </div>
             </div>
+
+            {/* 주소 */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">배송지 주소</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={formData.postal_code}
+                  readOnly
+                  placeholder="우편번호"
+                  className="w-28 px-4 py-3 border border-brown/20 rounded-lg bg-gray-50 text-brown/70"
+                />
+                <AddressSearch
+                  onComplete={({ postalCode, address }) => {
+                    setFormData({
+                      ...formData,
+                      postal_code: postalCode,
+                      address: address,
+                    });
+                  }}
+                />
+              </div>
+              <input
+                type="text"
+                value={formData.address}
+                readOnly
+                placeholder="기본주소 (주소 검색으로 입력)"
+                className="w-full px-4 py-3 border border-brown/20 rounded-lg bg-gray-50 text-brown/70"
+              />
+              <input
+                type="text"
+                value={formData.address_detail}
+                onChange={(e) => setFormData({ ...formData, address_detail: e.target.value })}
+                placeholder="상세주소 (동/호수 등)"
+                className="w-full px-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+              />
+            </div>
           </>
         )}
 
@@ -221,7 +265,7 @@ export default function Login() {
         <button
           onClick={() => {
             setIsSignUp(!isSignUp);
-            setFormData({ email: '', password: '', name: '', chapter: '', specialty: '', company: '', phone: '' });
+            setFormData({ email: '', password: '', name: '', chapter: '', specialty: '', company: '', phone: '', postal_code: '', address: '', address_detail: '' });
           }}
           className="text-primary-600 hover:underline"
         >

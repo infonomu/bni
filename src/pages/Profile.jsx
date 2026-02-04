@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
+import AddressSearch from '../components/common/AddressSearch';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -12,6 +13,9 @@ export default function Profile() {
     specialty: '',
     company: '',
     phone: '',
+    postal_code: '',
+    address: '',
+    address_detail: '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -30,6 +34,9 @@ export default function Profile() {
         specialty: profile.specialty || '',
         company: profile.company || '',
         phone: profile.phone || '',
+        postal_code: profile.postal_code || '',
+        address: profile.address || '',
+        address_detail: profile.address_detail || '',
       });
     }
   }, [profile]);
@@ -133,6 +140,43 @@ export default function Profile() {
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             placeholder="010-0000-0000"
+            className="w-full px-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+          />
+        </div>
+
+        {/* 주소 */}
+        <div className="space-y-3">
+          <label className="block text-sm font-medium">배송지 주소</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.postal_code}
+              readOnly
+              placeholder="우편번호"
+              className="w-28 px-4 py-3 border border-brown/20 rounded-lg bg-gray-50 text-brown/70"
+            />
+            <AddressSearch
+              onComplete={({ postalCode, address }) => {
+                setFormData({
+                  ...formData,
+                  postal_code: postalCode,
+                  address: address,
+                });
+              }}
+            />
+          </div>
+          <input
+            type="text"
+            value={formData.address}
+            readOnly
+            placeholder="기본주소 (주소 검색으로 입력)"
+            className="w-full px-4 py-3 border border-brown/20 rounded-lg bg-gray-50 text-brown/70"
+          />
+          <input
+            type="text"
+            value={formData.address_detail}
+            onChange={(e) => setFormData({ ...formData, address_detail: e.target.value })}
+            placeholder="상세주소 (동/호수 등)"
             className="w-full px-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
           />
         </div>

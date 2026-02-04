@@ -52,16 +52,39 @@ export default function MyProducts() {
     fetchData();
   }, [user]);
 
-  const handleDelete = async (productId) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-
-    try {
-      await deleteProduct(productId);
-      setProducts(products.filter(p => p.id !== productId));
-      toast.success('상품이 삭제되었습니다');
-    } catch (error) {
-      toast.error('삭제에 실패했습니다');
-    }
+  const handleDelete = (productId) => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="font-medium">정말 삭제하시겠습니까?</p>
+        <p className="text-sm text-gray-500">삭제된 상품은 복구할 수 없습니다.</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+          >
+            취소
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await deleteProduct(productId);
+                setProducts(products.filter(p => p.id !== productId));
+                toast.success('상품이 삭제되었습니다');
+              } catch (error) {
+                toast.error('삭제에 실패했습니다');
+              }
+            }}
+            className="px-3 py-1.5 text-sm text-white bg-red-500 rounded-lg hover:bg-red-600"
+          >
+            삭제
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+      position: 'top-center',
+    });
   };
 
   const handleSignOut = async () => {
