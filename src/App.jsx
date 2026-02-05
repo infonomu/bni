@@ -13,10 +13,16 @@ import { useAuthStore } from './hooks/useAuth';
 
 function App() {
   const initialize = useAuthStore((state) => state.initialize);
+  const cleanup = useAuthStore((state) => state.cleanup);
 
   useEffect(() => {
     initialize();
-  }, [initialize]);
+
+    // cleanup 함수 반환 (컴포넌트 언마운트 시 리스너 정리)
+    return () => {
+      cleanup();
+    };
+  }, [initialize, cleanup]);
 
   return (
     <Routes>

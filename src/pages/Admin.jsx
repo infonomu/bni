@@ -25,31 +25,28 @@ export default function Admin() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 설정 조회
-        const { data: settingsData } = await supabase
-          .from('settings')
-          .select('*')
-          .single();
-        setSettings(settingsData);
+        // Promise.all로 병렬 실행 (성능 개선)
+        const [
+          settingsResult,
+          productCountResult,
+          orderCountResult,
+          memberCountResult,
+          productsResult
+        ] = await Promise.all([
+          supabase.from('settings').select('*').single(),
+          supabase.from('products').select('*', { count: 'exact', head: true }),
+          supabase.from('orders').select('*', { count: 'exact', head: true }),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('products').select('*, profiles(name)').order('created_at', { ascending: false })
+        ]);
 
-        // 통계 조회
-        const { count: productCount } = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true });
-        const { count: orderCount } = await supabase
-          .from('orders')
-          .select('*', { count: 'exact', head: true });
-        const { count: memberCount } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-        setStats({ products: productCount, orders: orderCount, members: memberCount });
-
-        // 전체 상품 조회
-        const { data: productsData } = await supabase
-          .from('products')
-          .select('*, profiles(name)')
-          .order('created_at', { ascending: false });
-        setProducts(productsData || []);
+        setSettings(settingsResult.data);
+        setStats({
+          products: productCountResult.count,
+          orders: orderCountResult.count,
+          members: memberCountResult.count
+        });
+        setProducts(productsResult.data || []);
       } catch (error) {
         console.error('데이터 조회 에러:', error);
       } finally {

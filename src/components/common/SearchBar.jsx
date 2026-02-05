@@ -6,6 +6,12 @@ export default function SearchBar() {
   const { searchQuery, setSearchQuery, fetchProducts } = useProductStore();
   const [localQuery, setLocalQuery] = useState(searchQuery);
 
+  // 외부 searchQuery 변경 시 동기화
+  useEffect(() => {
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
+
+  // 디바운스된 검색 실행
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localQuery !== searchQuery) {
@@ -15,7 +21,7 @@ export default function SearchBar() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [localQuery]);
+  }, [localQuery, searchQuery, setSearchQuery, fetchProducts]);
 
   return (
     <div className="relative mb-4">

@@ -47,8 +47,8 @@ export default function Profile() {
       toast.error('이름을 입력해주세요');
       return;
     }
-    if (!formData.chapter.trim()) {
-      toast.error('챕터명을 입력해주세요');
+    if (!formData.chapter) {
+      toast.error('챕터를 선택해주세요');
       return;
     }
 
@@ -101,14 +101,25 @@ export default function Profile() {
           <label className="block text-sm font-medium mb-2">
             챕터명 <span className="text-primary-600">*</span>
           </label>
-          <input
-            type="text"
+          <select
             value={formData.chapter}
             onChange={(e) => setFormData({ ...formData, chapter: e.target.value })}
-            placeholder="예: 마포"
             className="w-full px-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
             required
-          />
+          >
+            <option value="">챕터 선택</option>
+            <option value="나이스">나이스</option>
+            <option value="매트릭스">매트릭스</option>
+            <option value="맥스">맥스</option>
+            <option value="스톤웍스">스톤웍스</option>
+            <option value="애티튜드">애티튜드</option>
+            <option value="유니콘">유니콘</option>
+            <option value="제우스">제우스</option>
+            <option value="케이">케이</option>
+            <option value="타이탄">타이탄</option>
+            <option value="탑클래스">탑클래스</option>
+            <option value="프레즌트">프레즌트</option>
+          </select>
         </div>
 
         <div>

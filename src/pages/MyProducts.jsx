@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { HiOutlinePencil, HiOutlineTrash, HiOutlinePlusCircle } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
 import { useProductStore } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
+import { supabase, executeWithRetry } from '../lib/supabase';
 import { formatPrice } from '../utils/format';
 
 export default function MyProducts() {
@@ -17,6 +18,7 @@ export default function MyProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('products');
+  const fetchIdRef = useRef(0);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -28,11 +30,11 @@ export default function MyProducts() {
   const fetchData = async () => {
     if (!user) return;
 
+    const currentFetchId = ++fetchIdRef.current;
     setLoading(true);
     setError(null);
     try {
       // 내 상품 조회 (자동 재시도 및 세션 갱신 포함)
-      const { supabase, executeWithRetry } = await import('../lib/supabase');
       const { data: productsData, error: productsError } = await executeWithRetry(
         () => supabase
           .from('products')
@@ -41,14 +43,24 @@ export default function MyProducts() {
           .order('created_at', { ascending: false })
       );
 
+      // race condition 방지: 최신 요청인지 확인
+      if (currentFetchId !== fetchIdRef.current) return;
+
       if (productsError) throw productsError;
 
       setProducts(productsData || []);
 
       // 내 상품에 대한 주문 조회
       const ordersData = await getSellerOrders(user.id);
+
+      // race condition 방지: 최신 요청인지 확인
+      if (currentFetchId !== fetchIdRef.current) return;
+
       setOrders(ordersData || []);
     } catch (error) {
+      // race condition 방지: 최신 요청인지 확인
+      if (currentFetchId !== fetchIdRef.current) return;
+
       console.error('데이터 조회 에러:', error);
 
       // 재시도 후에도 실패한 경우 - 세션/인증 관련 에러 확인
@@ -66,7 +78,10 @@ export default function MyProducts() {
         setError('fetch_error');
       }
     } finally {
-      setLoading(false);
+      // race condition 방지: 최신 요청인지 확인
+      if (currentFetchId === fetchIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 

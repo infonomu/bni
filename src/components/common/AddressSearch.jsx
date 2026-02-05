@@ -46,17 +46,20 @@ export default function AddressSearch({ onComplete, className = '' }) {
             postalCode,
             address,
           });
+          // 팝업 완료 시 로딩 해제
+          setLoading(false);
         },
         onclose: () => {
-          // 팝업 닫힐 때 처리 (필요시)
+          // 팝업 닫힐 때 로딩 해제
+          setLoading(false);
         },
       }).open();
     } catch (error) {
       console.error('주소 검색 에러:', error);
       alert('주소 검색을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
-    } finally {
       setLoading(false);
     }
+    // finally 블록에서 setLoading(false) 제거 - 비동기 팝업이므로 콜백에서 처리
   };
 
   return (

@@ -5,8 +5,16 @@ export const useAuthStore = create((set, get) => ({
   user: null,
   profile: null,
   loading: true,
+  _unsubscribe: null,
 
   initialize: async () => {
+    // 기존 리스너 정리 (StrictMode 중복 호출 방지)
+    const currentUnsubscribe = get()._unsubscribe;
+    if (currentUnsubscribe) {
+      currentUnsubscribe();
+      set({ _unsubscribe: null });
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -22,7 +30,7 @@ export const useAuthStore = create((set, get) => ({
     }
 
     // 인증 상태 변경 리스너
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         set({ user: session.user });
         await get().fetchProfile(session.user.id);
@@ -30,6 +38,18 @@ export const useAuthStore = create((set, get) => ({
         set({ user: null, profile: null });
       }
     });
+
+    // unsubscribe 함수 저장
+    set({ _unsubscribe: subscription.unsubscribe });
+  },
+
+  // cleanup 함수 추가 (컴포넌트 언마운트 시 호출)
+  cleanup: () => {
+    const unsubscribe = get()._unsubscribe;
+    if (unsubscribe) {
+      unsubscribe();
+      set({ _unsubscribe: null });
+    }
   },
 
   fetchProfile: async (userId) => {
@@ -66,21 +86,31 @@ export const useAuthStore = create((set, get) => ({
 
     // profiles 테이블에 추가 정보 저장
     if (data.user) {
-      const { error: profileError } = await supabase
+      const profileToSave = {
+        id: data.user.id,
+        name: profileData.name,
+        email: email,
+        chapter: profileData.chapter,
+        specialty: profileData.specialty,
+        company: profileData.company,
+        phone: profileData.phone,
+        postal_code: profileData.postal_code,
+        address: profileData.address,
+        address_detail: profileData.address_detail,
+      };
+
+      const { data: savedProfile, error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          id: data.user.id,
-          name: profileData.name,
-          email: email,
-          chapter: profileData.chapter,
-          specialty: profileData.specialty,
-          company: profileData.company,
-          phone: profileData.phone,
-          postal_code: profileData.postal_code,
-          address: profileData.address,
-          address_detail: profileData.address_detail,
-        });
-      if (profileError) console.error('프로필 저장 에러:', profileError);
+        .upsert(profileToSave)
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('프로필 저장 에러:', profileError);
+      } else {
+        // 저장된 프로필로 상태 업데이트
+        set({ user: data.user, profile: savedProfile });
+      }
     }
 
     return data;

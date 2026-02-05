@@ -19,6 +19,28 @@ export default function Register() {
     }
   }, [authLoading, user, navigate]);
 
+  // 챕터명 없으면 상품등록 불가
+  const canRegister = profile?.chapter;
+
+  if (!authLoading && user && !canRegister) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <span className="text-5xl">⚠️</span>
+        <h2 className="font-heading text-xl font-bold mt-4">챕터 정보가 필요합니다</h2>
+        <p className="text-brown/60 mt-2">
+          상품을 등록하려면 챕터 정보가 필요합니다.<br />
+          프로필에서 챕터를 선택해주세요.
+        </p>
+        <button
+          onClick={() => navigate('/profile')}
+          className="mt-6 px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          프로필 수정하기
+        </button>
+      </div>
+    );
+  }
+
   const handleSubmit = async (formData, images, _existingImages) => {
     if (!user) return;
 

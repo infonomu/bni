@@ -11,7 +11,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchProducts();
-  }, [category]);
+  }, [category, fetchProducts]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">

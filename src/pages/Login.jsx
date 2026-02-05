@@ -46,10 +46,6 @@ export default function Login() {
       return;
     }
 
-    if (isSignUp && !formData.chapter) {
-      toast.error('챕터명을 입력해주세요');
-      return;
-    }
 
     if (formData.password.length < 6) {
       toast.error('비밀번호는 6자 이상이어야 합니다');
@@ -74,7 +70,7 @@ export default function Login() {
       } else {
         await signIn(formData.email, formData.password);
         toast.success('로그인 성공!');
-        navigate('/');
+        navigate('/my-products');
       }
     } catch (error) {
       if (error.message.includes('Invalid login')) {
@@ -122,16 +118,27 @@ export default function Login() {
 
             {/* 챕터명 */}
             <div>
-              <label className="block text-sm font-medium mb-2">챕터명 <span className="text-primary-600">*</span></label>
+              <label className="block text-sm font-medium mb-2">챕터명</label>
               <div className="relative">
                 <HiOutlineUserGroup className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brown/40" />
-                <input
-                  type="text"
+                <select
                   value={formData.chapter}
                   onChange={(e) => setFormData({ ...formData, chapter: e.target.value })}
-                  placeholder="예: 마포"
-                  className="w-full pl-10 pr-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-                />
+                  className="w-full pl-10 pr-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none"
+                >
+                  <option value="">챕터 선택</option>
+                  <option value="나이스">나이스</option>
+                  <option value="매트릭스">매트릭스</option>
+                  <option value="맥스">맥스</option>
+                  <option value="스톤웍스">스톤웍스</option>
+                  <option value="애티튜드">애티튜드</option>
+                  <option value="유니콘">유니콘</option>
+                  <option value="제우스">제우스</option>
+                  <option value="케이">케이</option>
+                  <option value="타이탄">타이탄</option>
+                  <option value="탑클래스">탑클래스</option>
+                  <option value="프레즌트">프레즌트</option>
+                </select>
               </div>
             </div>
 

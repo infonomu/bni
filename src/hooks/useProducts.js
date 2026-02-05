@@ -14,6 +14,14 @@ export const CATEGORIES = [
 // 요청 ID 관리 (race condition 방지)
 let currentFetchId = 0;
 
+// 타임아웃 유틸리티 함수
+const withTimeout = (promise, ms, message) => {
+  const timeout = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]);
+};
+
 export const useProductStore = create((set, get) => ({
   products: [],
   loading: false,
@@ -34,27 +42,33 @@ export const useProductStore = create((set, get) => ({
     try {
       const { category, searchQuery, sortBy, sortOrder } = get();
 
-      // executeWithRetry로 자동 재시도 및 세션 갱신
-      const { data, error } = await executeWithRetry(async () => {
-        let query = supabase
-          .from('products')
-          .select('*, profiles(name, company, chapter, specialty, phone)')
-          .eq('is_active', true);
+      // executeWithRetry로 자동 재시도 및 세션 갱신 (15초 타임아웃)
+      const result = await withTimeout(
+        executeWithRetry(async () => {
+          let query = supabase
+            .from('products')
+            .select('*, profiles(name, company, chapter, specialty, phone)')
+            .eq('is_active', true);
 
-        if (category && category !== 'all') {
-          query = query.eq('category', category);
-        }
+          if (category && category !== 'all') {
+            query = query.eq('category', category);
+          }
 
-        if (searchQuery) {
-          query = query.or(
-            `name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
-          );
-        }
+          if (searchQuery) {
+            query = query.or(
+              `name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+            );
+          }
 
-        query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+          query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-        return await query;
-      });
+          return await query;
+        }),
+        15000,
+        '상품 조회 시간 초과'
+      );
+
+      const { data, error } = result;
 
       // 이 요청이 가장 최신 요청인지 확인
       if (fetchId !== currentFetchId) return;
@@ -109,11 +123,6 @@ export const useProductStore = create((set, get) => ({
     console.log('createProduct 호출:', product);
 
     try {
-      // 타임아웃 설정 (10초)
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Supabase 요청 타임아웃 (10초)')), 10000);
-      });
-
       const insertPromise = supabase
         .from('products')
         .insert(product)
@@ -121,7 +130,14 @@ export const useProductStore = create((set, get) => ({
 
       console.log('Supabase insert 요청 시작...');
 
-      const { data, error } = await Promise.race([insertPromise, timeoutPromise]);
+      // withTimeout 유틸리티 사용 (타임아웃 시에도 올바른 에러 처리)
+      const result = await withTimeout(
+        insertPromise,
+        10000,
+        'Supabase 요청 타임아웃 (10초)'
+      );
+
+      const { data, error } = result;
 
       console.log('createProduct 응답:', { data, error });
 
@@ -140,10 +156,6 @@ export const useProductStore = create((set, get) => ({
     console.log('updateProduct 호출:', { id, updates });
 
     try {
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Supabase 요청 타임아웃 (10초)')), 10000);
-      });
-
       const updatePromise = supabase
         .from('products')
         .update(updates)
@@ -151,7 +163,14 @@ export const useProductStore = create((set, get) => ({
         .select()
         .single();
 
-      const { data, error } = await Promise.race([updatePromise, timeoutPromise]);
+      // withTimeout 유틸리티 사용 (타임아웃 시에도 올바른 에러 처리)
+      const result = await withTimeout(
+        updatePromise,
+        10000,
+        'Supabase 요청 타임아웃 (10초)'
+      );
+
+      const { data, error } = result;
 
       console.log('updateProduct 응답:', { data, error });
 
