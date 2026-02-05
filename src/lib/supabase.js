@@ -69,6 +69,10 @@ export const executeWithRetry = async (queryFn, options = {}) => {
 
       return result;
     } catch (error) {
+      // AbortError는 StrictMode에서 정상적으로 발생할 수 있음 - 무시
+      if (error.name === 'AbortError') {
+        return { data: null, error: null };
+      }
       // 네트워크 에러 등 예외 발생 시
       if (attempt < maxRetries) {
         console.log(`요청 실패, 재시도... (${attempt + 1}/${maxRetries})`);

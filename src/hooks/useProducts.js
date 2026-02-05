@@ -66,6 +66,12 @@ export const useProductStore = create((set, get) => ({
       // 이 요청이 가장 최신 요청인지 확인
       if (fetchId !== currentFetchId) return;
 
+      // AbortError는 StrictMode에서 정상적으로 발생할 수 있음
+      if (error.name === 'AbortError') {
+        set({ loading: false });
+        return;
+      }
+
       console.error('상품 조회 에러:', error);
 
       // 세션/인증 관련 에러 확인 (재시도 후에도 실패한 경우)

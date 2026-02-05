@@ -14,6 +14,8 @@ export const useAuthStore = create((set, get) => ({
         await get().fetchProfile(session.user.id);
       }
     } catch (error) {
+      // AbortError는 StrictMode에서 정상적으로 발생할 수 있음
+      if (error.name === 'AbortError') return;
       console.error('Auth 초기화 에러:', error);
     } finally {
       set({ loading: false });
