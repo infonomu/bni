@@ -1,11 +1,11 @@
 /**
  * 이미지 압축 함수
  * @param {File} file - 원본 이미지 파일
- * @param {number} maxWidth - 최대 너비 (기본 1200px)
- * @param {number} quality - 압축 품질 0-1 (기본 0.8)
+ * @param {number} maxWidth - 최대 너비 (기본 800px)
+ * @param {number} quality - 압축 품질 0-1 (기본 0.6)
  * @returns {Promise<File>} 압축된 이미지 파일
  */
-export function compressImage(file, maxWidth = 1200, quality = 0.8) {
+export function compressImage(file, maxWidth = 800, quality = 0.6) {
   return new Promise((resolve, reject) => {
     // 이미 작은 파일은 압축하지 않음
     if (file.size < 500 * 1024) {
