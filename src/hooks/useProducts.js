@@ -109,15 +109,15 @@ export const useProductStore = create((set, get) => ({
 
   createProduct: async (product) => {
     try {
-      const insertPromise = supabase
-        .from('products')
-        .insert(product)
-        .select();
-
       const result = await withTimeout(
-        insertPromise,
-        10000,
-        'Supabase 요청 타임아웃 (10초)'
+        executeWithRetry(async () => {
+          return await supabase
+            .from('products')
+            .insert(product)
+            .select();
+        }),
+        30000,
+        '상품 등록 요청 시간 초과'
       );
 
       const { data, error } = result;
@@ -135,17 +135,17 @@ export const useProductStore = create((set, get) => ({
 
   updateProduct: async (id, updates) => {
     try {
-      const updatePromise = supabase
-        .from('products')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
       const result = await withTimeout(
-        updatePromise,
-        10000,
-        'Supabase 요청 타임아웃 (10초)'
+        executeWithRetry(async () => {
+          return await supabase
+            .from('products')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+        }),
+        30000,
+        '상품 수정 요청 시간 초과'
       );
 
       const { data, error } = result;
@@ -167,9 +167,13 @@ export const useProductStore = create((set, get) => ({
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(fileName, file);
+    const { error: uploadError } = await withTimeout(
+      supabase.storage
+        .from('product-images')
+        .upload(fileName, file),
+      30000,
+      '이미지 업로드 시간 초과'
+    );
 
     if (uploadError) throw uploadError;
 

@@ -6,16 +6,28 @@
  * @returns {Promise<File>} 압축된 이미지 파일
  */
 export function compressImage(file, maxWidth = 1200, quality = 0.8) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     // 이미 작은 파일은 압축하지 않음
     if (file.size < 500 * 1024) {
       resolve(file);
       return;
     }
 
+    const timeoutId = setTimeout(() => {
+      reject(new Error('이미지 압축 시간 초과 (30초)'));
+    }, 30000);
+
     const reader = new FileReader();
+    reader.onerror = () => {
+      clearTimeout(timeoutId);
+      reject(new Error('이미지 파일을 읽을 수 없습니다'));
+    };
     reader.onload = (e) => {
       const img = new Image();
+      img.onerror = () => {
+        clearTimeout(timeoutId);
+        reject(new Error('이미지를 로드할 수 없습니다'));
+      };
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
@@ -32,6 +44,11 @@ export function compressImage(file, maxWidth = 1200, quality = 0.8) {
 
         canvas.toBlob(
           (blob) => {
+            clearTimeout(timeoutId);
+            if (!blob) {
+              reject(new Error('이미지 압축에 실패했습니다'));
+              return;
+            }
             const compressedFile = new File([blob], file.name, {
               type: 'image/jpeg',
               lastModified: Date.now(),
