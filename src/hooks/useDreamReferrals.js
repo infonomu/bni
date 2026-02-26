@@ -4,12 +4,13 @@ import { supabase, executeWithRetry, isAuthError } from '../lib/supabase';
 // 요청 ID 관리 (race condition 방지)
 let currentFetchId = 0;
 
-// 타임아웃 유틸리티 함수
+// 타임아웃 유틸리티 함수 (타이머 정리 포함)
 const withTimeout = (promise, ms, message) => {
+  let timeoutId;
   const timeout = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(message)), ms);
+    timeoutId = setTimeout(() => reject(new Error(message)), ms);
   });
-  return Promise.race([promise, timeout]);
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
 };
 
 export const useDreamReferralStore = create((set, get) => ({
@@ -63,12 +64,13 @@ export const useDreamReferralStore = create((set, get) => ({
     } catch (error) {
       if (fetchId !== currentFetchId) return;
 
-      if (error.name === 'AbortError') {
+      // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
+      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
         set({ loading: false });
         return;
       }
 
-      console.error('드림리퍼럴 조회 에러:', error);
+      console.error('드림리퍼럴 조회 에러:', error?.message || error?.code || error);
       set({
         dreamReferrals: [],
         loading: false,

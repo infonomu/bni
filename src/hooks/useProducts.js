@@ -9,12 +9,13 @@ export { CATEGORIES };
 // 요청 ID 관리 (race condition 방지)
 let currentFetchId = 0;
 
-// 타임아웃 유틸리티 함수
+// 타임아웃 유틸리티 함수 (타이머 정리 포함)
 const withTimeout = (promise, ms, message) => {
+  let timeoutId;
   const timeout = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(message)), ms);
+    timeoutId = setTimeout(() => reject(new Error(message)), ms);
   });
-  return Promise.race([promise, timeout]);
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
 };
 
 export const useProductStore = create((set, get) => ({
@@ -75,13 +76,13 @@ export const useProductStore = create((set, get) => ({
       // 이 요청이 가장 최신 요청인지 확인
       if (fetchId !== currentFetchId) return;
 
-      // AbortError는 StrictMode에서 정상적으로 발생할 수 있음
-      if (error.name === 'AbortError') {
+      // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
+      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
         set({ loading: false });
         return;
       }
 
-      console.error('상품 조회 에러:', error);
+      console.error('상품 조회 에러:', error?.message || error?.code || error);
 
       set({
         products: [],

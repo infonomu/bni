@@ -20,7 +20,9 @@ export default function DreamReferral() {
   const [selectedDream, setSelectedDream] = useState(null);
 
   useEffect(() => {
-    fetchDreamReferrals();
+    let cancelled = false;
+    if (!cancelled) fetchDreamReferrals();
+    return () => { cancelled = true; };
   }, [category, fetchDreamReferrals]);
 
   const uniqueMembers = new Set(dreamReferrals.map(d => d.user_id)).size;
