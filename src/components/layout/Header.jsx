@@ -6,8 +6,10 @@ export default function Header() {
   const { user, profile } = useAuthStore();
   const location = useLocation();
 
-  const isChapters = location.pathname === '/chapters';
-  const isProducts = !isChapters;
+  const pathname = location.pathname;
+  const isChapters = pathname === '/chapters';
+  const isDream = pathname === '/dream-referral';
+  const isProducts = !isChapters && !isDream;
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
@@ -28,23 +30,36 @@ export default function Header() {
           <div className="flex items-center gap-1 mx-4">
             <Link
               to="/"
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 isProducts
                   ? 'bg-primary-50 text-primary-600 border border-primary-200'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              제품홍보관
+              <span className="hidden sm:inline">제품홍보관</span>
+              <span className="sm:hidden">제품</span>
             </Link>
             <Link
               to="/chapters"
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 isChapters
                   ? 'bg-primary-50 text-primary-600 border border-primary-200'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              챕터홍보관
+              <span className="hidden sm:inline">챕터홍보관</span>
+              <span className="sm:hidden">챕터</span>
+            </Link>
+            <Link
+              to="/dream-referral"
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                isDream
+                  ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <span className="hidden sm:inline">드림리퍼럴</span>
+              <span className="sm:hidden">드림</span>
             </Link>
           </div>
 

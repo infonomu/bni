@@ -16,6 +16,8 @@ export const CHAPTERS = [
   '유니콘', '제우스', '케이', '타이탄', '탑클래스', '프레즌트',
 ];
 
+export const DREAM_LIMIT = 3;
+
 export const SORT_OPTIONS = [
   { id: 'latest', name: '최신순', field: 'created_at' },
   { id: 'popular', name: '인기순', field: 'view_count' },

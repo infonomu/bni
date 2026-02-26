@@ -1,4 +1,5 @@
 import { HiOutlineArrowTopRightOnSquare, HiOutlineUsers } from 'react-icons/hi2';
+import { FaInstagram, FaYoutube, FaBlog } from 'react-icons/fa';
 
 const DAY_COLORS = {
   '월': 'bg-purple-100 text-purple-700',
@@ -78,17 +79,27 @@ export default function ChapterCard({ chapter, index }) {
             <HiOutlineArrowTopRightOnSquare className="w-4 h-4" />
             챕터 방문
           </a>
-          {chapter.website && (
-            <a
-              href={chapter.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center px-3 py-2.5 border border-slate-200 text-slate-600 text-sm rounded-xl hover:bg-slate-50 transition-colors"
-              title="챕터 홈페이지"
-            >
-              <HiOutlineArrowTopRightOnSquare className="w-4 h-4" />
-            </a>
-          )}
+          <button
+            disabled
+            className="flex items-center justify-center px-2.5 py-2.5 border border-slate-200 text-slate-300 rounded-xl cursor-not-allowed"
+            title="Instagram (준비중)"
+          >
+            <FaInstagram className="w-4 h-4" />
+          </button>
+          <button
+            disabled
+            className="flex items-center justify-center px-2.5 py-2.5 border border-slate-200 text-slate-300 rounded-xl cursor-not-allowed"
+            title="YouTube (준비중)"
+          >
+            <FaYoutube className="w-4 h-4" />
+          </button>
+          <button
+            disabled
+            className="flex items-center justify-center px-2.5 py-2.5 border border-slate-200 text-slate-300 rounded-xl cursor-not-allowed"
+            title="Blog (준비중)"
+          >
+            <FaBlog className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
