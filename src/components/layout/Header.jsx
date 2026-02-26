@@ -58,7 +58,7 @@ export default function Header() {
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              <span className="hidden sm:inline">드림리퍼럴</span>
+              <span className="hidden sm:inline">드림리퍼럴 커넥트</span>
               <span className="sm:hidden">드림</span>
             </Link>
           </div>
