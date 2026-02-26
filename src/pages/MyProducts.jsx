@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
 import { useProductStore } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
-import { supabase, executeWithRetry } from '../lib/supabase';
+import { supabase, executeWithRetry, isAuthError } from '../lib/supabase';
 import { formatPrice } from '../utils/format';
 
 export default function MyProducts() {
@@ -63,15 +63,7 @@ export default function MyProducts() {
 
       console.error('데이터 조회 에러:', error);
 
-      // 재시도 후에도 실패한 경우 - 세션/인증 관련 에러 확인
-      const isAuthError = error.message?.includes('JWT') ||
-                          error.message?.includes('token') ||
-                          error.message?.includes('session') ||
-                          error.code === 'PGRST301' ||
-                          error.status === 401 ||
-                          error.status === 403;
-
-      if (isAuthError) {
+      if (isAuthError(error)) {
         toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
         navigate('/login');
       } else {
@@ -239,7 +231,7 @@ export default function MyProducts() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl">
-                        🎁
+                        📦
                       </div>
                     )}
                   </div>

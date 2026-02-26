@@ -9,6 +9,7 @@ import MyProducts from './pages/MyProducts';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import Guide from './pages/Guide';
+import Chapters from './pages/Chapters';
 import { useAuthStore } from './hooks/useAuth';
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route path="my-products" element={<MyProducts />} />
         <Route path="profile" element={<Profile />} />
         <Route path="admin" element={<Admin />} />
+        <Route path="chapters" element={<Chapters />} />
         <Route path="guide" element={<Guide />} />
       </Route>
     </Routes>

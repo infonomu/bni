@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { HiOutlineEnvelope, HiOutlineLockClosed, HiOutlineUser, HiOutlineBuildingOffice, HiOutlinePhone, HiOutlineBriefcase, HiOutlineUserGroup } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
+import { CHAPTERS } from '../utils/constants';
 import AddressSearch from '../components/common/AddressSearch';
 
 export default function Login() {
@@ -88,7 +89,7 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto px-4 py-16">
       <div className="text-center mb-8">
-        <span className="text-5xl">🏮</span>
+        <span className="text-5xl">🏢</span>
         <h2 className="font-heading text-2xl font-bold mt-4">
           {isSignUp ? '회원가입' : '로그인'}
         </h2>
@@ -127,17 +128,9 @@ export default function Login() {
                   className="w-full pl-10 pr-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none"
                 >
                   <option value="">챕터 선택</option>
-                  <option value="나이스">나이스</option>
-                  <option value="매트릭스">매트릭스</option>
-                  <option value="맥스">맥스</option>
-                  <option value="스톤웍스">스톤웍스</option>
-                  <option value="애티튜드">애티튜드</option>
-                  <option value="유니콘">유니콘</option>
-                  <option value="제우스">제우스</option>
-                  <option value="케이">케이</option>
-                  <option value="타이탄">타이탄</option>
-                  <option value="탑클래스">탑클래스</option>
-                  <option value="프레즌트">프레즌트</option>
+                  {CHAPTERS.map((ch) => (
+                    <option key={ch} value={ch}>{ch}</option>
+                  ))}
                 </select>
               </div>
             </div>

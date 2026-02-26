@@ -64,8 +64,8 @@ function getSellerEmailHtml(order: any, product: any, totalPrice: string): strin
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: linear-gradient(135deg, #C41E3A, #a01830); border-radius: 16px 16px 0 0;">
           <tr>
             <td style="padding: 30px; text-align: center;">
-              <div style="font-size: 40px; line-height: 1;">🏮🧧</div>
-              <h1 style="margin: 10px 0 0; font-size: 24px; color: white;">BNI 마포 설선물관</h1>
+              <div style="font-size: 40px; line-height: 1;">🏢📋</div>
+              <h1 style="margin: 10px 0 0; font-size: 24px; color: white;">BNI 마포홍보관</h1>
               <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">새로운 주문이 접수되었습니다!</p>
             </td>
           </tr>
@@ -191,8 +191,8 @@ function getSellerEmailHtml(order: any, product: any, totalPrice: string): strin
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #2D1B14; border-radius: 0 0 16px 16px;">
           <tr>
             <td style="padding: 20px; text-align: center; color: #FDF6ED; font-size: 12px;">
-              이 주문은 BNI 마포 설선물관을 통해 접수되었습니다.<br>
-              © 2025 BNI 마포 정보람 디렉터
+              이 주문은 BNI 마포홍보관을 통해 접수되었습니다.<br>
+              © 2026 BNI 마포 정보람 디렉터
             </td>
           </tr>
         </table>
@@ -221,8 +221,8 @@ function getBuyerEmailHtml(order: any, product: any, seller: any, totalPrice: st
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: linear-gradient(135deg, #C41E3A, #a01830); border-radius: 16px 16px 0 0;">
           <tr>
             <td style="padding: 30px; text-align: center;">
-              <div style="font-size: 40px; line-height: 1;">🏮✨</div>
-              <h1 style="margin: 10px 0 0; font-size: 24px; color: white;">BNI 마포 설선물관</h1>
+              <div style="font-size: 40px; line-height: 1;">🏢✨</div>
+              <h1 style="margin: 10px 0 0; font-size: 24px; color: white;">BNI 마포홍보관</h1>
               <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">주문이 접수되었습니다!</p>
             </td>
           </tr>
@@ -354,8 +354,8 @@ function getBuyerEmailHtml(order: any, product: any, seller: any, totalPrice: st
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #2D1B14; border-radius: 0 0 16px 16px;">
           <tr>
             <td style="padding: 20px; text-align: center; color: #FDF6ED; font-size: 12px;">
-              BNI 마포 설선물관을 이용해주셔서 감사합니다.<br>
-              © 2025 BNI 마포 정보람 디렉터
+              BNI 마포홍보관을 이용해주셔서 감사합니다.<br>
+              © 2026 BNI 마포 정보람 디렉터
             </td>
           </tr>
         </table>
@@ -382,7 +382,7 @@ serve(async (req: any) => {
     // @ts-ignore
     const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
     // @ts-ignore
-    const fromEmail = "BNI 마포 설선물관 <onboarding@resend.dev>";
+    const fromEmail = "BNI 마포홍보관 <onboarding@resend.dev>";
 
     if (!resendApiKey) {
       return new Response(
@@ -430,7 +430,7 @@ serve(async (req: any) => {
         resendApiKey,
         fromEmail,
         seller.email,
-        `[BNI 마포 설선물관] 새 주문 - ${product.name}`,
+        `[BNI 마포홍보관] 새 주문 - ${product.name}`,
         getSellerEmailHtml(order, product, totalPrice)
       );
       sellerEmailSent = sellerResult.success;
@@ -445,7 +445,7 @@ serve(async (req: any) => {
         resendApiKey,
         fromEmail,
         order.buyer_email,
-        `[BNI 마포 설선물관] 주문 확인 - ${product.name}`,
+        `[BNI 마포홍보관] 주문 확인 - ${product.name}`,
         getBuyerEmailHtml(order, product, seller, totalPrice)
       );
       buyerEmailSent = buyerResult.success;

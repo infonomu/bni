@@ -107,6 +107,11 @@ export const useAuthStore = create((set, get) => ({
 
       if (profileError) {
         console.error('프로필 저장 에러:', profileError);
+        // 회원가입은 성공했지만 프로필 추가 정보 저장 실패
+        // handle_new_user 트리거가 최소 프로필은 생성하므로 치명적이지 않음
+        set({ user: data.user });
+        await get().fetchProfile(data.user.id);
+        throw new Error('회원가입은 완료되었지만 프로필 정보 일부가 저장되지 않았습니다. 프로필 페이지에서 정보를 보완해주세요.');
       } else {
         // 저장된 프로필로 상태 업데이트
         set({ user: data.user, profile: savedProfile });

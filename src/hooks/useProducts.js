@@ -1,15 +1,10 @@
 import { create } from 'zustand';
-import { supabase, executeWithRetry } from '../lib/supabase';
+import { supabase, executeWithRetry, isAuthError } from '../lib/supabase';
+import { CATEGORIES } from '../utils/constants';
 
-export const CATEGORIES = [
-  { id: 'all', name: '전체', emoji: '🎁' },
-  { id: 'food', name: '식품/음료', emoji: '🍱' },
-  { id: 'living', name: '생활/뷰티', emoji: '🧴' },
-  { id: 'health', name: '건강/웰빙', emoji: '💪' },
-  { id: 'culture', name: '문화/체험', emoji: '🎭' },
-  { id: 'biz', name: '기업서비스', emoji: '💼' },
-  { id: 'etc', name: '기타', emoji: '✨' },
-];
+// CATEGORIES는 src/utils/constants.js에서 관리
+// 하위 호환을 위해 re-export
+export { CATEGORIES };
 
 // 요청 ID 관리 (race condition 방지)
 let currentFetchId = 0;
@@ -88,18 +83,10 @@ export const useProductStore = create((set, get) => ({
 
       console.error('상품 조회 에러:', error);
 
-      // 세션/인증 관련 에러 확인 (재시도 후에도 실패한 경우)
-      const isAuthError = error.message?.includes('JWT') ||
-                          error.message?.includes('token') ||
-                          error.message?.includes('session') ||
-                          error.code === 'PGRST301' ||
-                          error.status === 401 ||
-                          error.status === 403;
-
       set({
         products: [],
         loading: false,
-        error: isAuthError ? 'session_expired' : 'fetch_error'
+        error: isAuthError(error) ? 'session_expired' : 'fetch_error'
       });
     }
   },
@@ -120,17 +107,12 @@ export const useProductStore = create((set, get) => ({
   },
 
   createProduct: async (product) => {
-    console.log('createProduct 호출:', product);
-
     try {
       const insertPromise = supabase
         .from('products')
         .insert(product)
         .select();
 
-      console.log('Supabase insert 요청 시작...');
-
-      // withTimeout 유틸리티 사용 (타임아웃 시에도 올바른 에러 처리)
       const result = await withTimeout(
         insertPromise,
         10000,
@@ -138,8 +120,6 @@ export const useProductStore = create((set, get) => ({
       );
 
       const { data, error } = result;
-
-      console.log('createProduct 응답:', { data, error });
 
       if (error) {
         console.error('createProduct 에러:', error);
@@ -153,8 +133,6 @@ export const useProductStore = create((set, get) => ({
   },
 
   updateProduct: async (id, updates) => {
-    console.log('updateProduct 호출:', { id, updates });
-
     try {
       const updatePromise = supabase
         .from('products')
@@ -163,7 +141,6 @@ export const useProductStore = create((set, get) => ({
         .select()
         .single();
 
-      // withTimeout 유틸리티 사용 (타임아웃 시에도 올바른 에러 처리)
       const result = await withTimeout(
         updatePromise,
         10000,
@@ -171,8 +148,6 @@ export const useProductStore = create((set, get) => ({
       );
 
       const { data, error } = result;
-
-      console.log('updateProduct 응답:', { data, error });
 
       if (error) throw error;
       return data;

@@ -1,9 +1,19 @@
 import { motion } from 'framer-motion';
-import { CATEGORIES } from '../../hooks/useProducts';
+import { CATEGORIES } from '../../utils/constants';
 import { formatPriceRange } from '../../utils/format';
+
+const CATEGORY_GRADIENTS = {
+  food: 'from-orange-100 to-amber-50',
+  living: 'from-purple-100 to-pink-50',
+  health: 'from-green-100 to-emerald-50',
+  culture: 'from-blue-100 to-indigo-50',
+  biz: 'from-gray-100 to-slate-50',
+  etc: 'from-rose-100 to-red-50',
+};
 
 export default function ProductCard({ product, index, onClick }) {
   const category = CATEGORIES.find(c => c.id === product.category);
+  const gradientClass = CATEGORY_GRADIENTS[product.category] || 'from-gray-100 to-slate-50';
 
   return (
     <motion.article
@@ -22,8 +32,11 @@ export default function ProductCard({ product, index, onClick }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-6xl opacity-50">{category?.emoji || '🎁'}</span>
+          <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex flex-col items-center justify-center gap-2`}>
+            <span className="text-4xl opacity-60">{category?.emoji || '📦'}</span>
+            {product.profiles?.name && (
+              <span className="text-xs text-gray-500 font-medium">{product.profiles.name}</span>
+            )}
           </div>
         )}
         {/* 카테고리 뱃지 */}

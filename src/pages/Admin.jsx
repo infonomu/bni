@@ -104,7 +104,7 @@ export default function Admin() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h2 className="font-heading text-2xl font-bold">관리자 대시보드</h2>
-        <p className="text-brown/60 mt-1">설선물관 운영 관리</p>
+        <p className="text-brown/60 mt-1">홍보관 운영 관리</p>
       </div>
 
       {/* 통계 카드 */}
@@ -148,12 +148,12 @@ export default function Admin() {
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">선물관 타이틀</label>
+              <label className="block text-sm font-medium mb-2">홍보관 타이틀</label>
               <input
                 type="text"
                 value={settings.title || ''}
                 onChange={(e) => setSettings({ ...settings, title: e.target.value })}
-                className="w-full px-4 py-3 border rounded-lg"
+                className="w-full px-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
@@ -162,7 +162,7 @@ export default function Admin() {
                 value={settings.notice || ''}
                 onChange={(e) => setSettings({ ...settings, notice: e.target.value })}
                 rows={3}
-                className="w-full px-4 py-3 border rounded-lg"
+                className="w-full px-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -172,7 +172,7 @@ export default function Admin() {
                   type="datetime-local"
                   value={settings.open_date?.slice(0, 16) || ''}
                   onChange={(e) => setSettings({ ...settings, open_date: e.target.value })}
-                  className="w-full px-4 py-3 border rounded-lg"
+                  className="w-full px-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -181,7 +181,7 @@ export default function Admin() {
                   type="datetime-local"
                   value={settings.close_date?.slice(0, 16) || ''}
                   onChange={(e) => setSettings({ ...settings, close_date: e.target.value })}
-                  className="w-full px-4 py-3 border rounded-lg"
+                  className="w-full px-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
@@ -193,7 +193,7 @@ export default function Admin() {
                 onChange={(e) => setSettings({ ...settings, is_open: e.target.checked })}
                 className="w-5 h-5 rounded text-primary-600"
               />
-              <label htmlFor="is_open" className="font-medium">선물관 오픈</label>
+              <label htmlFor="is_open" className="font-medium">홍보관 오픈</label>
             </div>
             <button
               onClick={handleSaveSettings}

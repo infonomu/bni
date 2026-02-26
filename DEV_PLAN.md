@@ -1,12 +1,12 @@
-# BNI 마포 DnA 설선물관 - 개발 계획
+# BNI 마포홍보관 - 개발 계획
 
 ## 1. 프로젝트 개요
 
 | 항목 | 내용 |
 |------|------|
-| **프로젝트명** | BNI 마포 DnA 설선물관 |
+| **프로젝트명** | BNI 마포홍보관 |
 | **기술 스택** | React 19 + Vite 7 + Supabase + Tailwind CSS 4 |
-| **목표** | BNI 멤버 간 설 선물 거래 플랫폼 |
+| **목표** | BNI 멤버 간 비즈니스 홍보 플랫폼 |
 
 ---
 
@@ -22,7 +22,7 @@ bnimapo/
 │   │   ├── product/         # ProductCard, ProductForm, ProductModal, CategoryFilter
 │   │   └── order/           # OrderForm
 │   ├── pages/
-│   │   ├── Home.jsx         # 메인 선물관
+│   │   ├── Home.jsx         # 메인 홍보관
 │   │   ├── Login.jsx        # 로그인
 │   │   ├── Register.jsx     # 상품 등록
 │   │   ├── EditProduct.jsx  # 상품 수정
