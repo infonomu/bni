@@ -70,7 +70,7 @@ export const executeWithRetry = async (queryFn, options = {}) => {
       return result;
     } catch (error) {
       // AbortError는 StrictMode에서 정상적으로 발생할 수 있음 - 무시
-      if (error.name === 'AbortError') {
+      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
         return { data: null, error: null };
       }
       // 네트워크 에러 등 예외 발생 시
