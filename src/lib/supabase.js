@@ -7,11 +7,42 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase 환경변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.');
 }
 
+// 글로벌 fetch 래퍼: 30초 타임아웃 + 자동 재시도 (cold start 대응)
+const fetchWithRetry = async (url, options = {}) => {
+  const MAX_RETRIES = 2;
+  const TIMEOUT_MS = 30000;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: options.signal || controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      // 외부에서 전달한 signal로 abort된 경우 (StrictMode 등) 재시도하지 않음
+      if (options.signal?.aborted) throw error;
+      // 마지막 시도면 에러 throw
+      if (attempt >= MAX_RETRIES) throw error;
+      // 재시도 전 대기 (백오프)
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+  },
+  global: {
+    fetch: fetchWithRetry,
   },
 });
 
