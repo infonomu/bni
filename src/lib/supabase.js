@@ -16,7 +16,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // 세션 만료 관련 에러인지 확인
-const isAuthError = (error) => {
+export const isAuthError = (error) => {
   if (!error) return false;
   const message = error.message?.toLowerCase() || '';
   return (

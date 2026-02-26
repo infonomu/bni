@@ -5,16 +5,20 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
 import { useProductStore } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
-import { supabase, executeWithRetry } from '../lib/supabase';
+import { useDreamReferralStore } from '../hooks/useDreamReferrals';
+import { supabase, executeWithRetry, isAuthError } from '../lib/supabase';
 import { formatPrice } from '../utils/format';
+import { CATEGORIES } from '../utils/constants';
 
 export default function MyProducts() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, signOut } = useAuthStore();
   const { deleteProduct } = useProductStore();
   const { getSellerOrders } = useOrders();
+  const { deleteDreamReferral } = useDreamReferralStore();
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [myDreams, setMyDreams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('products');
@@ -57,21 +61,26 @@ export default function MyProducts() {
       if (currentFetchId !== fetchIdRef.current) return;
 
       setOrders(ordersData || []);
+
+      // 내 드림리퍼럴 조회
+      const { data: dreamsData, error: dreamsError } = await executeWithRetry(
+        () => supabase
+          .from('dream_referrals')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+      );
+
+      if (currentFetchId !== fetchIdRef.current) return;
+      if (!dreamsError) setMyDreams(dreamsData || []);
     } catch (error) {
       // race condition 방지: 최신 요청인지 확인
       if (currentFetchId !== fetchIdRef.current) return;
 
       console.error('데이터 조회 에러:', error);
 
-      // 재시도 후에도 실패한 경우 - 세션/인증 관련 에러 확인
-      const isAuthError = error.message?.includes('JWT') ||
-                          error.message?.includes('token') ||
-                          error.message?.includes('session') ||
-                          error.code === 'PGRST301' ||
-                          error.status === 401 ||
-                          error.status === 403;
-
-      if (isAuthError) {
+      if (isAuthError(error)) {
         toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
         navigate('/login');
       } else {
@@ -108,6 +117,40 @@ export default function MyProducts() {
                 await deleteProduct(productId);
                 setProducts(products.filter(p => p.id !== productId));
                 toast.success('상품이 삭제되었습니다');
+              } catch (error) {
+                toast.error('삭제에 실패했습니다');
+              }
+            }}
+            className="px-3 py-1.5 text-sm text-white bg-red-500 rounded-lg hover:bg-red-600"
+          >
+            삭제
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+      position: 'top-center',
+    });
+  };
+
+  const handleDeleteDream = (dreamId) => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="font-medium">드림리퍼럴을 삭제하시겠습니까?</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+          >
+            취소
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await deleteDreamReferral(dreamId);
+                setMyDreams(myDreams.filter(d => d.id !== dreamId));
+                toast.success('드림리퍼럴이 삭제되었습니다');
               } catch (error) {
                 toast.error('삭제에 실패했습니다');
               }
@@ -206,6 +249,16 @@ export default function MyProducts() {
         >
           받은 주문 ({orders.length})
         </button>
+        <button
+          onClick={() => setActiveTab('dreams')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'dreams'
+              ? 'bg-amber-500 text-white'
+              : 'bg-white text-brown/70 hover:bg-brown/5'
+          }`}
+        >
+          드림리퍼럴 ({myDreams.length})
+        </button>
       </div>
 
       {/* 내 상품 목록 */}
@@ -239,7 +292,7 @@ export default function MyProducts() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl">
-                        🎁
+                        📦
                       </div>
                     )}
                   </div>
@@ -268,6 +321,53 @@ export default function MyProducts() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 내 드림리퍼럴 목록 */}
+      {activeTab === 'dreams' && (
+        <div>
+          {myDreams.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl">
+              <span className="text-5xl">🌟</span>
+              <p className="mt-4 text-brown/60">등록한 드림리퍼럴이 없습니다</p>
+              <Link
+                to="/dream-referral"
+                className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+              >
+                드림리퍼럴 등록하러 가기
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {myDreams.map(dream => {
+                const cat = CATEGORIES.find(c => c.id === dream.category);
+                return (
+                  <div
+                    key={dream.id}
+                    className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm"
+                  >
+                    <div className="w-20 h-20 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-3xl">{cat?.emoji || '🌟'}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{dream.title}</h3>
+                      <p className="text-sm text-slate-500 line-clamp-1">{dream.description}</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {cat?.name}{dream.amount_hint && ` · ${dream.amount_hint}`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteDream(dream.id)}
+                      className="p-2 text-brown/60 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      <HiOutlineTrash className="w-5 h-5" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

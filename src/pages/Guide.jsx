@@ -7,12 +7,12 @@ export default function Guide() {
       {/* 히어로 섹션 */}
       <section className="text-center mb-12">
         <div className="flex justify-center gap-4 mb-4">
-          <span className="text-4xl floating-decoration" style={{ animationDelay: '0s' }}>📖</span>
-          <span className="text-4xl floating-decoration" style={{ animationDelay: '0.5s' }}>🎁</span>
+          <span className="text-4xl floating-decoration" style={{ animationDelay: '0s' }}>🏢</span>
+          <span className="text-4xl floating-decoration" style={{ animationDelay: '0.5s' }}>🤝</span>
           <span className="text-4xl floating-decoration" style={{ animationDelay: '1s' }}>✨</span>
         </div>
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-primary-600 mb-6">
-          사용방법 안내
+          홍보관 이용 안내
         </h2>
 
         {/* 핵심 메시지 박스 */}
@@ -21,15 +21,15 @@ export default function Guide() {
           <ul className="space-y-2 text-brown/80">
             <li className="flex items-start gap-2">
               <span className="text-primary-600 mt-1">•</span>
-              <span><strong>정식 쇼핑몰이 아닙니다</strong> - 멤버들의 상품을 소개하고 이메일로 연결해드리는 서비스입니다.</span>
+              <span><strong>정식 쇼핑몰이 아닙니다</strong> - BNI 마포 멤버들의 비즈니스를 소개하고 연결해드리는 플랫폼입니다.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary-600 mt-1">•</span>
-              <span><strong>이메일 주문 시</strong> - 결제는 판매 멤버와 별도로 연락하여 진행합니다.</span>
+              <span><strong>문의/주문 시</strong> - 결제는 판매 멤버와 별도로 연락하여 진행합니다.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary-600 mt-1">•</span>
-              <span><strong>모든 마포 멤버</strong>가 상품을 등록할 수 있습니다.</span>
+              <span><strong>모든 마포 멤버</strong>가 비즈니스 아이템을 등록할 수 있습니다.</span>
             </li>
           </ul>
         </div>
@@ -41,7 +41,7 @@ export default function Guide() {
         <section className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="font-heading text-xl font-bold text-primary-600 mb-4 flex items-center gap-2">
             <span className="text-2xl">📦</span>
-            상품등록방법
+            아이템 등록 방법
           </h3>
           <div className="space-y-4">
             <div className="flex gap-4 items-start">
@@ -69,7 +69,7 @@ export default function Guide() {
               <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 font-bold flex items-center justify-center shrink-0">4</div>
               <div>
                 <h4 className="font-semibold text-brown">상품 정보 입력</h4>
-                <p className="text-brown/70 text-sm">상품명, 가격, 설명, 이미지, 카테고리 등을 입력하고 등록합니다.</p>
+                <p className="text-brown/70 text-sm">아이템명, 가격, 설명, 이미지, 카테고리 등을 입력하고 등록합니다.</p>
               </div>
             </div>
           </div>
@@ -78,30 +78,30 @@ export default function Guide() {
         {/* 주문방법 */}
         <section className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="font-heading text-xl font-bold text-primary-600 mb-4 flex items-center gap-2">
-            <span className="text-2xl">🛒</span>
-            주문방법
+            <span className="text-2xl">🤝</span>
+            문의 및 주문 방법
           </h3>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* 방법 A */}
             <div className="bg-accent-50 rounded-xl p-4">
-              <h4 className="font-bold text-accent-700 mb-3">방법 A: 사이트 직접 주문</h4>
+              <h4 className="font-bold text-accent-700 mb-3">방법 A: 사이트 직접 방문</h4>
               <ol className="space-y-2 text-sm text-brown/80">
                 <li className="flex gap-2">
                   <span className="font-bold text-accent-600">1.</span>
-                  <span>원하는 상품을 클릭합니다.</span>
+                  <span>원하는 아이템을 클릭합니다.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="font-bold text-accent-600">2.</span>
-                  <span>"쇼핑몰 바로가기" 버튼이 있으면 클릭합니다.</span>
+                  <span>"사이트 바로가기" 버튼이 있으면 클릭합니다.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="font-bold text-accent-600">3.</span>
-                  <span>판매자의 쇼핑몰에서 직접 주문합니다.</span>
+                  <span>멤버의 공식 사이트에서 직접 문의하거나 주문합니다.</span>
                 </li>
               </ol>
               <p className="mt-3 text-xs text-accent-600 bg-accent-100 rounded-lg p-2">
-                💡 판매자의 공식 쇼핑몰에서 안전하게 결제!
+                💡 멤버의 공식 채널에서 안전하게 거래!
               </p>
             </div>
 
@@ -111,7 +111,7 @@ export default function Guide() {
               <ol className="space-y-2 text-sm text-brown/80">
                 <li className="flex gap-2">
                   <span className="font-bold text-primary-600">1.</span>
-                  <span>원하는 상품을 클릭합니다.</span>
+                  <span>원하는 아이템을 클릭합니다.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="font-bold text-primary-600">2.</span>
@@ -123,11 +123,11 @@ export default function Guide() {
                 </li>
                 <li className="flex gap-2">
                   <span className="font-bold text-primary-600">4.</span>
-                  <span>판매자가 연락하면 결제 방법을 협의합니다.</span>
+                  <span>멤버가 연락하면 세부 사항을 협의합니다.</span>
                 </li>
               </ol>
               <p className="mt-3 text-xs text-primary-600 bg-primary-100 rounded-lg p-2">
-                ⚠️ 이메일 주문 시 결제는 판매자와 별도 진행!
+                ⚠️ 이메일 주문 시 결제는 멤버와 별도 진행!
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function Guide() {
         <section className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="font-heading text-xl font-bold text-primary-600 mb-4 flex items-center gap-2">
             <span className="text-2xl">📋</span>
-            주문확인방법
+            주문 확인 방법
           </h3>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -151,14 +151,14 @@ export default function Guide() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-accent-600">•</span>
-                  <span>판매자가 별도로 연락하여 결제 및 배송을 안내합니다.</span>
+                  <span>멤버가 별도로 연락하여 결제 및 배송을 안내합니다.</span>
                 </li>
               </ul>
             </div>
 
             {/* 판매자 */}
             <div className="border border-primary-200 rounded-xl p-4">
-              <h4 className="font-bold text-brown mb-3">📦 판매자</h4>
+              <h4 className="font-bold text-brown mb-3">📦 멤버(판매자)</h4>
               <ul className="space-y-2 text-sm text-brown/80">
                 <li className="flex items-start gap-2">
                   <span className="text-primary-600">•</span>
@@ -193,7 +193,7 @@ export default function Guide() {
             className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all hover:-translate-y-0.5 hover:shadow-lg"
           >
             <HiOutlinePlusCircle className="w-5 h-5" />
-            상품 등록하기
+            아이템 등록하기
           </Link>
         </div>
       </section>

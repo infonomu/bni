@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
+import { CHAPTERS } from '../utils/constants';
 import AddressSearch from '../components/common/AddressSearch';
 
 export default function Profile() {
@@ -108,17 +109,9 @@ export default function Profile() {
             required
           >
             <option value="">챕터 선택</option>
-            <option value="나이스">나이스</option>
-            <option value="매트릭스">매트릭스</option>
-            <option value="맥스">맥스</option>
-            <option value="스톤웍스">스톤웍스</option>
-            <option value="애티튜드">애티튜드</option>
-            <option value="유니콘">유니콘</option>
-            <option value="제우스">제우스</option>
-            <option value="케이">케이</option>
-            <option value="타이탄">타이탄</option>
-            <option value="탑클래스">탑클래스</option>
-            <option value="프레즌트">프레즌트</option>
+            {CHAPTERS.map((ch) => (
+              <option key={ch} value={ch}>{ch}</option>
+            ))}
           </select>
         </div>
 

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { HiOutlinePhoto, HiOutlineXMark, HiOutlineGlobeAlt } from 'react-icons/hi2';
+import toast from 'react-hot-toast';
 
 export default function ProductForm({
   categories,
@@ -27,17 +28,17 @@ export default function ProductForm({
     const totalImages = images.length + existingImages.length + files.length;
 
     if (totalImages > 3) {
-      alert('이미지는 최대 3장까지 업로드할 수 있습니다.');
+      toast.error('이미지는 최대 3장까지 업로드할 수 있습니다.');
       return;
     }
 
     const validFiles = files.filter(file => {
       if (file.size > 5 * 1024 * 1024) {
-        alert(`${file.name}은 5MB를 초과합니다.`);
+        toast.error(`${file.name}은 5MB를 초과합니다.`);
         return false;
       }
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        alert(`${file.name}은 지원하지 않는 형식입니다.`);
+        toast.error(`${file.name}은 지원하지 않는 형식입니다.`);
         return false;
       }
       return true;
@@ -61,7 +62,7 @@ export default function ProductForm({
 
     // 최대 가격이 최소 가격보다 작으면 에러
     if (priceMax && priceMax < price) {
-      alert('최대 가격은 최소 가격보다 크거나 같아야 합니다.');
+      toast.error('최대 가격은 최소 가격보다 크거나 같아야 합니다.');
       return;
     }
 

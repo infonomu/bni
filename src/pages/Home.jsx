@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useProductStore, CATEGORIES } from '../hooks/useProducts';
+import { useProductStore } from '../hooks/useProducts';
+import { CATEGORIES } from '../utils/constants';
 import ProductCard from '../components/product/ProductCard';
 import ProductModal from '../components/product/ProductModal';
 import CategoryFilter from '../components/product/CategoryFilter';
@@ -16,26 +17,28 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* 히어로 섹션 */}
-      <section className="text-center mb-12">
-        <div className="flex justify-center gap-4 mb-4">
-          <span className="text-4xl floating-decoration" style={{ animationDelay: '0s' }}>🏮</span>
-          <span className="text-4xl floating-decoration" style={{ animationDelay: '0.5s' }}>🧧</span>
-          <span className="text-4xl floating-decoration" style={{ animationDelay: '1s' }}>✨</span>
-        </div>
-        <h2 className="font-heading text-3xl md:text-4xl font-bold text-primary-600 mb-4">
-          2026 설선물관
+      <section className="text-center mb-12 py-10">
+        <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4 bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+          마포홍보관
         </h2>
-        <p className="text-brown/70 max-w-2xl mx-auto">
-          BNI 마포 멤버들의 특별한 설 선물을 만나보세요.
+        <p className="text-slate-600 text-lg max-w-xl mx-auto mb-8">
+          BNI 마포 멤버들의 비즈니스를 만나보세요.
           <br />
           멤버 간 비즈니스 연결로 함께 성장합니다.
         </p>
-        <p className="text-brown/60 text-sm max-w-2xl mx-auto mt-4 bg-ivory p-4 rounded-xl">
-          설선물관은 쇼핑몰이 아닙니다.<br />
-          멤버들의 쇼핑몰에 바로 연결 주문하시거나,<br />
-          이메일로 주문서를 전송하실 수 있습니다.<br />
-          비회원 주문도 가능합니다.
-        </p>
+        <div className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
+          <p className="text-xs font-semibold text-primary-600 uppercase tracking-widest mb-2">안내</p>
+          <ul className="space-y-1.5 text-sm text-slate-600">
+            <li className="flex items-start gap-2">
+              <span className="text-primary-500 mt-0.5 shrink-0">•</span>
+              <span>홍보관은 쇼핑몰이 아닙니다. 멤버들의 쇼핑몰에 바로 연결하거나 이메일로 주문서를 전송할 수 있습니다.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary-500 mt-0.5 shrink-0">•</span>
+              <span>비회원 주문도 가능합니다.</span>
+            </li>
+          </ul>
+        </div>
       </section>
 
       {/* 검색 및 필터 */}

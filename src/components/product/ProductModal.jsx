@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineXMark, HiOutlineChevronLeft, HiOutlineChevronRight, HiOutlineShare, HiOutlineGlobeAlt } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
-import { CATEGORIES } from '../../hooks/useProducts';
+import { CATEGORIES } from '../../utils/constants';
 import { formatPriceRange } from '../../utils/format';
 import OrderForm from '../order/OrderForm';
 
@@ -111,7 +111,7 @@ export default function ProductModal({ product, onClose }) {
               </>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-8xl opacity-30">{category?.emoji || '🎁'}</span>
+                <span className="text-8xl opacity-30">{category?.emoji || '📦'}</span>
               </div>
             )}
           </div>

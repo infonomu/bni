@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
-import { useProductStore, CATEGORIES } from '../hooks/useProducts';
+import { useProductStore } from '../hooks/useProducts';
+import { CATEGORIES } from '../utils/constants';
 import ProductForm from '../components/product/ProductForm';
 import { compressImage } from '../utils/image';
 
@@ -87,7 +88,7 @@ export default function EditProduct() {
         <span className="text-4xl">✏️</span>
         <h2 className="font-heading text-2xl font-bold mt-4">상품 수정</h2>
         <p className="text-brown/60 text-sm max-w-md mx-auto mt-3 bg-ivory p-3 rounded-xl">
-          설 선물관은 멤버들간 연결을 위한 플랫폼이며, 쇼핑몰이 아닙니다.<br />
+          홍보관은 멤버들간 연결을 위한 플랫폼이며, 쇼핑몰이 아닙니다.<br />
           쇼핑몰 URL 연결, 또는 이메일로 주문서를 받으실 수 있습니다.
         </p>
       </div>
