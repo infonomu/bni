@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(npx playwright:*)",
+      "Bash(npx vercel:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh issue:*)",
+      "Bash(curl:*)",
+      "Bash(timeout:*)",
+      "Bash(python3:*)",
+      "Bash(xargs cat:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:bni-orcin.vercel.app)"
+    ]
+  }
+}
