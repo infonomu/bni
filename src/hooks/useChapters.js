@@ -76,7 +76,7 @@ export const useChapterStore = create((set, get) => ({
         chapters: CHAPTER_DATA_FALLBACK,
         chapterNames: CHAPTER_NAMES_FALLBACK,
         loading: false,
-        error: 'fetch_error',
+        error: null,
         initialized: true,
       });
     }
