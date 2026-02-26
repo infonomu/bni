@@ -2,12 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
-import { CHAPTERS } from '../utils/constants';
+import { useChapterStore } from '../hooks/useChapters';
 import AddressSearch from '../components/common/AddressSearch';
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, updateProfile } = useAuthStore();
+  const { chapterNames, fetchChapters } = useChapterStore();
+
+  useEffect(() => {
+    fetchChapters();
+  }, [fetchChapters]);
   const [formData, setFormData] = useState({
     name: '',
     chapter: '',
@@ -109,7 +114,7 @@ export default function Profile() {
             required
           >
             <option value="">챕터 선택</option>
-            {CHAPTERS.map((ch) => (
+            {chapterNames.map((ch) => (
               <option key={ch} value={ch}>{ch}</option>
             ))}
           </select>

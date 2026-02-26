@@ -9,13 +9,24 @@ const DAY_COLORS = {
   '금': 'bg-red-100 text-red-700',
 };
 
-function getDayColor(meeting) {
-  const day = meeting[0];
+const MEETING_TYPE_LABEL = {
+  IN_PERSON: { label: '대면', className: 'bg-emerald-100 text-emerald-700' },
+  PERM_HYBRID: { label: '하이브리드', className: 'bg-violet-100 text-violet-700' },
+  PERM_ONLINE: { label: '온라인', className: 'bg-sky-100 text-sky-700' },
+};
+
+function getDayColor(meetingDay) {
+  if (!meetingDay) return 'bg-slate-100 text-slate-700';
+  const day = meetingDay[0];
   return DAY_COLORS[day] || 'bg-slate-100 text-slate-700';
 }
 
 export default function ChapterCard({ chapter, index }) {
-  const dayColorClass = getDayColor(chapter.meeting);
+  const dayColorClass = getDayColor(chapter.meeting_day);
+  const meetingText = chapter.meeting_day
+    ? `${chapter.meeting_day} ${chapter.meeting_time || ''}`.trim()
+    : '';
+  const typeInfo = MEETING_TYPE_LABEL[chapter.meeting_type] || null;
 
   return (
     <div
@@ -29,23 +40,27 @@ export default function ChapterCard({ chapter, index }) {
         {/* 챕터명 */}
         <div className="mb-4">
           <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none">
-            {chapter.name}
+            {chapter.name_ko || chapter.name}
           </h3>
-          <p className="text-sm text-slate-400 font-medium mt-1">BNI {chapter.nameEn}</p>
+          <p className="text-sm text-slate-400 font-medium mt-1">BNI {chapter.name}</p>
         </div>
 
         {/* 미팅 정보 */}
         <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-base">📅</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${dayColorClass}`}>
-              {chapter.meeting}
-            </span>
-          </div>
-          <div className="flex items-start gap-2">
-            <span className="text-base shrink-0">📍</span>
-            <span className="text-sm text-slate-600">{chapter.location}</span>
-          </div>
+          {meetingText && (
+            <div className="flex items-center gap-2">
+              <span className="text-base">📅</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${dayColorClass}`}>
+                {meetingText}
+              </span>
+            </div>
+          )}
+          {chapter.meeting_location && (
+            <div className="flex items-start gap-2">
+              <span className="text-base shrink-0">📍</span>
+              <span className="text-sm text-slate-600">{chapter.meeting_location}</span>
+            </div>
+          )}
         </div>
 
         {/* 멤버 수 + 미팅 타입 */}
@@ -53,17 +68,12 @@ export default function ChapterCard({ chapter, index }) {
           <div className="flex items-center gap-1.5">
             <HiOutlineUsers className="w-4 h-4 text-slate-400" />
             <span className="text-sm text-slate-500">
-              멤버 <span className="font-bold text-slate-700">{chapter.members}</span>명
+              멤버 <span className="font-bold text-slate-700">{chapter.member_count ?? '-'}</span>명
             </span>
           </div>
-          {chapter.type && (
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              chapter.type === 'In-Person' ? 'bg-emerald-100 text-emerald-700' :
-              chapter.type === 'Hybrid' ? 'bg-violet-100 text-violet-700' :
-              'bg-sky-100 text-sky-700'
-            }`}>
-              {chapter.type === 'In-Person' ? '대면' :
-               chapter.type === 'Hybrid' ? '하이브리드' : '온라인'}
+          {typeInfo && (
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeInfo.className}`}>
+              {typeInfo.label}
             </span>
           )}
         </div>
@@ -71,7 +81,7 @@ export default function ChapterCard({ chapter, index }) {
         {/* 하단 버튼 영역 */}
         <div className="mt-auto flex gap-2">
           <a
-            href={chapter.bniUrl}
+            href={chapter.bni_url}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"

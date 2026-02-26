@@ -1,8 +1,15 @@
-import { CHAPTER_DATA } from '../utils/constants';
+import { useEffect } from 'react';
+import { useChapterStore } from '../hooks/useChapters';
 import ChapterCard from '../components/chapter/ChapterCard';
 
 export default function Chapters() {
-  const totalMembers = CHAPTER_DATA.reduce((sum, c) => sum + c.members, 0);
+  const { chapters, loading, error, fetchChapters } = useChapterStore();
+
+  useEffect(() => {
+    fetchChapters();
+  }, [fetchChapters]);
+
+  const totalMembers = chapters.reduce((sum, c) => sum + (c.member_count || 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -12,7 +19,7 @@ export default function Chapters() {
           마포 챕터
         </h2>
         <p className="text-slate-600 text-lg max-w-xl mx-auto mb-8">
-          BNI 마포 지역의 {CHAPTER_DATA.length}개 챕터를 만나보세요.
+          BNI 마포 지역의 {chapters.length}개 챕터를 만나보세요.
           <br />
           총 {totalMembers}명의 멤버가 함께 성장하고 있습니다.
         </p>
@@ -20,7 +27,7 @@ export default function Chapters() {
         {/* 통계 뱃지 */}
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm">
-            <span className="text-primary-600 font-black text-lg">{CHAPTER_DATA.length}</span>
+            <span className="text-primary-600 font-black text-lg">{chapters.length}</span>
             <span className="text-sm text-slate-500 font-medium">챕터</span>
           </div>
           <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm">
@@ -32,15 +39,45 @@ export default function Chapters() {
 
       {/* 챕터 카드 그리드 */}
       <section>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {CHAPTER_DATA.map((chapter, index) => (
-            <ChapterCard
-              key={chapter.id}
-              chapter={chapter}
-              index={index}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse">
+                <div className="h-1.5 bg-slate-200" />
+                <div className="p-6 space-y-4">
+                  <div className="h-7 bg-slate-200 rounded w-3/4" />
+                  <div className="h-4 bg-slate-200 rounded w-1/2" />
+                  <div className="space-y-2">
+                    <div className="h-4 bg-slate-200 rounded w-2/3" />
+                    <div className="h-4 bg-slate-200 rounded w-full" />
+                  </div>
+                  <div className="h-10 bg-slate-200 rounded-xl mt-auto" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <p className="text-slate-500 text-lg mb-2">챕터 정보를 불러오는 중 오류가 발생했습니다.</p>
+            <p className="text-slate-400 text-sm mb-6">폴백 데이터를 사용하고 있습니다.</p>
+            <button
+              onClick={() => useChapterStore.getState().reset()}
+              className="px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {chapters.map((chapter, index) => (
+              <ChapterCard
+                key={chapter.id}
+                chapter={chapter}
+                index={index}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

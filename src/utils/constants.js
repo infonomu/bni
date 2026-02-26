@@ -11,11 +11,6 @@ export const CATEGORIES = [
   { id: 'etc', name: '기타', emoji: '✨' },
 ];
 
-export const CHAPTERS = [
-  '나이스', '매트릭스', '맥스', '스톤웍스', '애티튜드',
-  '유니콘', '제우스', '케이', '타이탄', '탑클래스', '프레즌트',
-];
-
 export const DREAM_LIMIT = 3;
 
 export const SORT_OPTIONS = [
@@ -24,6 +19,8 @@ export const SORT_OPTIONS = [
   { id: 'orders', name: '주문순', field: 'order_count' },
 ];
 
+// 폴백 전용: DB(chapters 테이블) 조회 실패 시 useChapters 훅에서 사용.
+// 실제 데이터는 Supabase chapters 테이블에서 주기적으로 자동 갱신됨.
 export const CHAPTER_DATA = [
   {
     id: 'nice',

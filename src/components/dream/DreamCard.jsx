@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CATEGORIES, CHAPTERS } from '../../utils/constants';
+import { CATEGORIES } from '../../utils/constants';
 
 const CHAPTER_GRADIENTS = {
   '나이스': 'from-violet-400 to-purple-500',

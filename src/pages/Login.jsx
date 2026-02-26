@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiOutlineEnvelope, HiOutlineLockClosed, HiOutlineUser, HiOutlineBuildingOffice, HiOutlinePhone, HiOutlineBriefcase, HiOutlineUserGroup } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
-import { CHAPTERS } from '../utils/constants';
+import { useChapterStore } from '../hooks/useChapters';
 import AddressSearch from '../components/common/AddressSearch';
 
 export default function Login() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuthStore();
+  const { chapterNames, fetchChapters } = useChapterStore();
   const [isSignUp, setIsSignUp] = useState(false);
+
+  useEffect(() => {
+    fetchChapters();
+  }, [fetchChapters]);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -128,7 +133,7 @@ export default function Login() {
                   className="w-full pl-10 pr-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white appearance-none"
                 >
                   <option value="">챕터 선택</option>
-                  {CHAPTERS.map((ch) => (
+                  {chapterNames.map((ch) => (
                     <option key={ch} value={ch}>{ch}</option>
                   ))}
                 </select>
