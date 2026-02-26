@@ -180,14 +180,20 @@ export default function ProductForm({
         <div className="relative">
           <HiOutlineGlobeAlt className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brown/40" />
           <input
-            type="url"
+            type="text"
             value={formData.site_url}
             onChange={(e) => setFormData({ ...formData, site_url: e.target.value })}
-            placeholder="https://example.com"
+            onBlur={(e) => {
+              const val = e.target.value.trim();
+              if (val && !/^https?:\/\//i.test(val)) {
+                setFormData({ ...formData, site_url: 'https://' + val });
+              }
+            }}
+            placeholder="example.com"
             className="w-full pl-10 pr-4 py-3 border border-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
           />
         </div>
-        <p className="text-xs text-brown/50 mt-1">상품 상세 페이지나 쇼핑몰 링크</p>
+        <p className="text-xs text-brown/50 mt-1">도메인만 입력하면 https://가 자동으로 붙습니다</p>
       </div>
 
       {/* 이메일 주문 수신 여부 */}
