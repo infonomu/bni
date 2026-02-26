@@ -26,40 +26,37 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* 메인 탭 네비게이션 */}
-          <div className="flex items-center gap-1 mx-4">
+          {/* 메인 탭 네비게이션 - 데스크탑만 표시 */}
+          <div className="hidden md:flex items-center gap-1 mx-4">
             <Link
               to="/"
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 isProducts
                   ? 'bg-primary-50 text-primary-600 border border-primary-200'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              <span className="hidden sm:inline">제품홍보관</span>
-              <span className="sm:hidden">제품</span>
+              제품홍보관
             </Link>
             <Link
               to="/chapters"
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 isChapters
                   ? 'bg-primary-50 text-primary-600 border border-primary-200'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              <span className="hidden sm:inline">챕터홍보관</span>
-              <span className="sm:hidden">챕터</span>
+              챕터홍보관
             </Link>
             <Link
               to="/dream-referral"
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 isDream
                   ? 'bg-amber-50 text-amber-600 border border-amber-200'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              <span className="hidden sm:inline">드림리퍼럴 커넥트</span>
-              <span className="sm:hidden">드림</span>
+              드림리퍼럴 커넥트
             </Link>
           </div>
 
