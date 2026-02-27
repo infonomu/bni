@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
+import { supabase, executeWithRetry } from '../lib/supabase';
 
 export const useMemberStore = create((set, get) => ({
   members: [],
@@ -18,18 +18,21 @@ export const useMemberStore = create((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      let query = supabase
-        .from('chapter_members')
-        .select('*', { count: 'exact' })
-        .eq('is_active', true)
-        .order('chapter_name')
-        .order('member_name');
+      // executeWithRetry로 자동 재시도 및 세션 갱신
+      const { data, error, count } = await executeWithRetry(async () => {
+        let query = supabase
+          .from('chapter_members')
+          .select('*', { count: 'exact' })
+          .eq('is_active', true)
+          .order('chapter_name')
+          .order('member_name');
 
-      if (chapterFilter) query = query.eq('chapter_name', chapterFilter);
-      if (specialtySearch) query = query.ilike('specialty', `%${specialtySearch}%`);
-      query = query.range((page - 1) * pageSize, page * pageSize - 1);
+        if (chapterFilter) query = query.eq('chapter_name', chapterFilter);
+        if (specialtySearch) query = query.ilike('specialty', `%${specialtySearch}%`);
+        query = query.range((page - 1) * pageSize, page * pageSize - 1);
 
-      const { data, error, count } = await query;
+        return await query;
+      });
 
       if (error) throw error;
 

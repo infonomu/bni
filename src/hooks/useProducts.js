@@ -38,31 +38,28 @@ export const useProductStore = create((set, get) => ({
     try {
       const { category, searchQuery, sortBy, sortOrder } = get();
 
-      // executeWithRetry로 자동 재시도 및 세션 갱신 (15초 타임아웃)
-      const result = await withTimeout(
-        executeWithRetry(async () => {
-          let query = supabase
-            .from('products')
-            .select('*, profiles(name, company, chapter, specialty, phone)')
-            .eq('is_active', true);
+      // executeWithRetry로 자동 재시도 및 세션 갱신
+      // (글로벌 fetchWithRetry가 30초 타임아웃 + 2회 재시도 처리)
+      const result = await executeWithRetry(async () => {
+        let query = supabase
+          .from('products')
+          .select('*, profiles(name, company, chapter, specialty, phone)')
+          .eq('is_active', true);
 
-          if (category && category !== 'all') {
-            query = query.eq('category', category);
-          }
+        if (category && category !== 'all') {
+          query = query.eq('category', category);
+        }
 
-          if (searchQuery) {
-            query = query.or(
-              `name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
-            );
-          }
+        if (searchQuery) {
+          query = query.or(
+            `name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+          );
+        }
 
-          query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+        query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-          return await query;
-        }),
-        15000,
-        '상품 조회 시간 초과'
-      );
+        return await query;
+      });
 
       const { data, error } = result;
 
