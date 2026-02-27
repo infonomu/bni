@@ -58,10 +58,10 @@ export const useAuthStore = create((set, get) => ({
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      set({ profile: data });
+      if (data) set({ profile: data });
     } catch (error) {
       console.error('프로필 조회 에러:', error);
     }
