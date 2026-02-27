@@ -19,14 +19,19 @@ const fetchWithRetry = async (url, options = {}) => {
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     try {
+      const t0 = performance.now();
       const response = await fetch(url, {
         ...options,
         signal: options.signal || controller.signal,
       });
       clearTimeout(timeoutId);
+      const path = url.replace(/https?:\/\/[^/]+/, '').split('?')[0];
+      console.log(`[Fetch] ${options?.method || 'GET'} ${path} → ${response.status} (${(performance.now()-t0).toFixed(0)}ms, attempt:${attempt})`);
       return response;
     } catch (error) {
       clearTimeout(timeoutId);
+      const path = url.replace(/https?:\/\/[^/]+/, '').split('?')[0];
+      console.warn(`[Fetch] ${path} 실패 (attempt:${attempt}): ${error.name} ${error.message?.substring(0,60)}`);
       // 외부에서 전달한 signal로 abort된 경우 (StrictMode 등) 재시도하지 않음
       if (options.signal?.aborted) throw error;
       // 마지막 시도면 에러 throw
@@ -102,9 +107,10 @@ export const executeWithRetry = async (queryFn, options = {}) => {
 
       return result;
     } catch (error) {
-      // AbortError는 StrictMode에서 정상적으로 발생할 수 있음 - 무시
+      // AbortError는 호출자가 처리하도록 re-throw
+      // (기존: {data:null, error:null} 반환 → 빈 목록으로 잘못 표시되는 버그)
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
-        return { data: null, error: null };
+        throw error;
       }
       // 네트워크 에러 등 예외 발생 시
       if (attempt < maxRetries) {

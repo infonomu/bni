@@ -35,34 +35,33 @@ export const useProductStore = create((set, get) => ({
   fetchProducts: async () => {
     const fetchId = ++currentFetchId;
     set({ loading: true, error: null });
+    console.log('[Products] fetchProducts 시작, fetchId:', fetchId);
+    const t0 = performance.now();
     try {
       const { category, searchQuery, sortBy, sortOrder } = get();
 
-      // executeWithRetry로 자동 재시도 및 세션 갱신 (15초 타임아웃)
-      const result = await withTimeout(
-        executeWithRetry(async () => {
-          let query = supabase
-            .from('products')
-            .select('*, profiles(name, company, chapter, specialty, phone)')
-            .eq('is_active', true);
+      // executeWithRetry로 자동 재시도 및 세션 갱신
+      // (글로벌 fetchWithRetry가 30초 타임아웃 + 2회 재시도 처리)
+      const result = await executeWithRetry(async () => {
+        let query = supabase
+          .from('products')
+          .select('*, profiles(name, company, chapter, specialty, phone)')
+          .eq('is_active', true);
 
-          if (category && category !== 'all') {
-            query = query.eq('category', category);
-          }
+        if (category && category !== 'all') {
+          query = query.eq('category', category);
+        }
 
-          if (searchQuery) {
-            query = query.or(
-              `name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
-            );
-          }
+        if (searchQuery) {
+          query = query.or(
+            `name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+          );
+        }
 
-          query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+        query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-          return await query;
-        }),
-        15000,
-        '상품 조회 시간 초과'
-      );
+        return await query;
+      });
 
       const { data, error } = result;
 
@@ -71,6 +70,7 @@ export const useProductStore = create((set, get) => ({
 
       if (error) throw error;
 
+      console.log(`[Products] 완료: ${(data||[]).length}건, ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
       set({ products: data || [], loading: false, error: null });
     } catch (error) {
       // 이 요청이 가장 최신 요청인지 확인
@@ -78,11 +78,12 @@ export const useProductStore = create((set, get) => ({
 
       // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        console.log(`[Products] AbortError (무시), fetchId:${fetchId}`);
         set({ loading: false });
         return;
       }
 
-      console.error('상품 조회 에러:', error?.message || error?.code || error);
+      console.error('[Products] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
 
       set({
         products: [],

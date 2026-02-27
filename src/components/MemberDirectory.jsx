@@ -19,7 +19,7 @@ export default function MemberDirectory() {
     setPage,
   } = useMemberStore();
 
-  const { chapterNames, fetchChapters } = useChapterStore();
+  const { chapters, fetchChapters } = useChapterStore();
 
   const [searchInput, setSearchInput] = useState(specialtySearch);
 
@@ -49,7 +49,8 @@ export default function MemberDirectory() {
   }, [specialtySearch, fetchMembers]);
 
   const totalPages = Math.ceil(totalCount / pageSize);
-  const uniqueChapters = chapterNames.length > 0 ? chapterNames : [];
+  // chapters 배열에서 영문명(name) 추출 - chapter_members.chapter_name과 일치
+  const chapterOptions = chapters.map((c) => ({ name: c.name, nameKo: c.name_ko }));
 
   const handleChapterChange = useCallback(
     (e) => {
@@ -76,7 +77,7 @@ export default function MemberDirectory() {
           <span className="text-sm text-slate-500 font-medium">전체 멤버</span>
         </div>
         <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm">
-          <span className="text-primary-600 font-black text-lg">{uniqueChapters.length}</span>
+          <span className="text-primary-600 font-black text-lg">{chapterOptions.length}</span>
           <span className="text-sm text-slate-500 font-medium">챕터</span>
         </div>
       </div>
@@ -90,9 +91,9 @@ export default function MemberDirectory() {
           className="px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 transition-colors"
         >
           <option value="">전체 챕터</option>
-          {uniqueChapters.map((name) => (
-            <option key={name} value={name}>
-              {name}
+          {chapterOptions.map((c) => (
+            <option key={c.name} value={c.name}>
+              {c.name} ({c.nameKo})
             </option>
           ))}
         </select>

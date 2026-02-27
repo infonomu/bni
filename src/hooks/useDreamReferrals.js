@@ -27,50 +27,52 @@ export const useDreamReferralStore = create((set, get) => ({
   fetchDreamReferrals: async () => {
     const fetchId = ++currentFetchId;
     set({ loading: true, error: null });
+    console.log('[DreamReferrals] fetchDreamReferrals 시작, fetchId:', fetchId);
+    const t0 = performance.now();
     try {
       const { category, searchQuery } = get();
 
-      const result = await withTimeout(
-        executeWithRetry(async () => {
-          let query = supabase
-            .from('dream_referrals')
-            .select('*, profiles(name, company, chapter, specialty, phone)')
-            .eq('is_active', true);
+      // executeWithRetry로 자동 재시도 및 세션 갱신
+      // (글로벌 fetchWithRetry가 30초 타임아웃 + 2회 재시도 처리)
+      const result = await executeWithRetry(async () => {
+        let query = supabase
+          .from('dream_referrals')
+          .select('*, profiles(name, company, chapter, specialty, phone)')
+          .eq('is_active', true);
 
-          if (category && category !== 'all') {
-            query = query.eq('category', category);
-          }
+        if (category && category !== 'all') {
+          query = query.eq('category', category);
+        }
 
-          if (searchQuery) {
-            query = query.or(
-              `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
-            );
-          }
+        if (searchQuery) {
+          query = query.or(
+            `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+          );
+        }
 
-          query = query.order('created_at', { ascending: false });
+        query = query.order('created_at', { ascending: false });
 
-          return await query;
-        }),
-        15000,
-        '드림리퍼럴 조회 시간 초과'
-      );
+        return await query;
+      });
 
       if (fetchId !== currentFetchId) return;
 
       const { data, error } = result;
       if (error) throw error;
 
+      console.log(`[DreamReferrals] 완료: ${(data||[]).length}건, ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
       set({ dreamReferrals: data || [], loading: false, error: null });
     } catch (error) {
       if (fetchId !== currentFetchId) return;
 
       // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        console.log(`[DreamReferrals] AbortError (무시), fetchId:${fetchId}`);
         set({ loading: false });
         return;
       }
 
-      console.error('드림리퍼럴 조회 에러:', error?.message || error?.code || error);
+      console.error('[DreamReferrals] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
       set({
         dreamReferrals: [],
         loading: false,

@@ -31,37 +31,14 @@ const BNI_MEMBER_API_URL = "http://bnimapo.com/bnicms/v3/frontend/chapterdetail/
 const TIMEOUT_MS = 100_000; // 100초 안전장치
 const CHAPTER_DELAY_MS = 1_000; // 챕터 간 요청 간격 (rate limiting 방지)
 const MISS_COUNT_THRESHOLD = 2; // 연속 미확인 횟수 임계값
-
-const FETCH_HEADERS = {
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  "Accept": "application/json, text/plain, */*",
-  "Accept-Language": "ko-KR,ko;q=0.9",
-  "Content-Type": "application/json",
-  "Referer": "http://bnimapo.com/",
-};
+const BNI_WEBSITE_TYPE = "2";
+const BNI_WEBSITE_ID = "10538";
 
 interface Chapter {
   id: string;
   name: string;      // 영문명
   name_ko: string;   // 한글명
   encoded_chapter_id: string;
-}
-
-interface RawMember {
-  memberName?: string;
-  member_name?: string;
-  name?: string;
-  memberNameEn?: string;
-  member_name_en?: string;
-  companyName?: string;
-  company?: string;
-  profession?: string;
-  specialty?: string;
-  phone?: string;
-  phoneNumber?: string;
-  encryptedMemberId?: string;
-  encrypted_member_id?: string;
 }
 
 interface ParsedMember {
@@ -90,84 +67,90 @@ function normalizeName(name: string): string {
 }
 
 // BNI 챕터 상세 API 호출하여 멤버 목록 파싱
+// form-encoded POST로 chapterdetail/display 호출 → HTML 테이블에서 멤버 추출
 async function fetchChapterMembers(encodedChapterId: string): Promise<ParsedMember[]> {
+  const params = new URLSearchParams({
+    pageMode: "Live_Site",
+    chapterId: encodedChapterId,
+    languageLocaleCode: "ko",
+    website_type: BNI_WEBSITE_TYPE,
+    website_id: BNI_WEBSITE_ID,
+    mappedWidgetSettings: "[]",
+    planyourvisit: "y",
+  });
+
   const response = await fetch(BNI_MEMBER_API_URL, {
     method: "POST",
-    headers: FETCH_HEADERS,
-    body: JSON.stringify({ chapterId: encodedChapterId }),
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Accept": "text/html, */*; q=0.01",
+      "Accept-Language": "ko-KR,ko;q=0.9",
+      "X-Requested-With": "XMLHttpRequest",
+      "Referer": `http://bnimapo.com/ko/chapterdetail?chapterId=${encodeURIComponent(encodedChapterId)}`,
+    },
+    body: params.toString(),
   });
 
   if (!response.ok) {
     throw new Error(`API 응답 오류: ${response.status} ${response.statusText}`);
   }
 
-  const contentType = response.headers.get("content-type") ?? "";
-
-  // JSON 응답 처리
-  if (contentType.includes("application/json")) {
-    const data = await response.json();
-    const rawList: RawMember[] = Array.isArray(data)
-      ? data
-      : (data.members ?? data.memberList ?? data.data ?? []);
-    return rawList.map(parseMember);
-  }
-
-  // HTML 응답 처리: deno-dom으로 파싱
   const html = await response.text();
   return parseMembersFromHtml(html);
 }
 
-// Raw JSON 멤버 데이터 정규화
-function parseMember(raw: RawMember): ParsedMember {
-  return {
-    member_name: (raw.memberName ?? raw.member_name ?? raw.name ?? "").trim(),
-    member_name_en: (raw.memberNameEn ?? raw.member_name_en ?? null)?.trim() || null,
-    company: (raw.companyName ?? raw.company ?? null)?.trim() || null,
-    specialty: (raw.profession ?? raw.specialty ?? null)?.trim() || null,
-    phone: (raw.phoneNumber ?? raw.phone ?? null)?.trim() || null,
-    encrypted_member_id: (raw.encryptedMemberId ?? raw.encrypted_member_id ?? null)?.trim() || null,
-  };
-}
-
-// HTML 응답에서 멤버 정보 파싱 (deno-dom 사용)
-async function parseMembersFromHtml(html: string): Promise<ParsedMember[]> {
-  let DOMParser: any;
-  try {
-    // @ts-ignore
-    const denodom = await import("https://deno.land/x/deno_dom@v0.1.43/deno-dom-wasm.ts");
-    DOMParser = denodom.DOMParser;
-  } catch {
-    throw new Error("HTML 응답을 받았지만 deno-dom 로드 실패. JSON 응답이 아닌 경우 deno-dom 필요.");
-  }
-
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  if (!doc) throw new Error("HTML 파싱 실패");
-
+// HTML 테이블에서 멤버 정보 추출 (정규식 파싱 - deno-dom 불필요)
+// 테이블 행 구조:
+//   <td><a href="memberdetails?encryptedMemberId=...&name=...">이름 Name</a></td>
+//   <td>회사명</td>
+//   <td>업종 카테고리 > 세부 업종</td>
+//   <td><bdi>전화번호</bdi></td>
+function parseMembersFromHtml(html: string): ParsedMember[] {
   const members: ParsedMember[] = [];
 
-  // 멤버 카드/행 셀렉터 (BNI 사이트 구조에 따라 조정 필요)
-  // 방어적 파싱: 여러 패턴 시도
-  const memberCards = doc.querySelectorAll(".member-card, .member-item, [data-member-id], tr.member-row");
+  // 테이블 행 추출: <tr role="row" class="even|odd">...</tr>
+  const rowRegex = /<tr\s+role="row"\s+class="(?:even|odd)">([\s\S]*?)<\/tr>/gi;
+  let rowMatch;
 
-  for (const card of memberCards) {
-    const memberName = (
-      card.querySelector(".member-name, .name, [data-name]")?.textContent ?? ""
-    ).trim();
+  while ((rowMatch = rowRegex.exec(html)) !== null) {
+    const rowHtml = rowMatch[1];
 
-    if (!memberName) continue;
+    // 첫 번째 <td>: 멤버 이름 + encryptedMemberId 링크
+    const nameLink = rowHtml.match(
+      /href=["']?memberdetails\?encryptedMemberId=([^&"'\s]+)[^>]*class="linkone"[^>]*>([^<]+)</
+    );
+    if (!nameLink) continue;
+
+    const encryptedMemberId = decodeURIComponent(nameLink[1]);
+    const fullName = nameLink[2].trim();
+
+    // 한글/영문 이름 분리: "김준영 Kim. Joon-young"
+    const nameKo = fullName.replace(/\s+[A-Za-z].*$/, "").trim();
+    const nameEn = fullName.replace(/^[^\s]*\s+/, "").trim();
+
+    // <td> 내용 추출 (순서: 이름, 회사, 업종, 전화번호)
+    const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const tds: string[] = [];
+    let tdMatch;
+    while ((tdMatch = tdRegex.exec(rowHtml)) !== null) {
+      // HTML 태그 제거 후 텍스트만
+      const text = tdMatch[1].replace(/<[^>]+>/g, "").trim();
+      tds.push(text);
+    }
+
+    // tds[0]: 이름 (이미 링크에서 추출), tds[1]: 회사, tds[2]: 업종, tds[3]: 전화번호
+    const company = tds[1] || null;
+    const specialty = tds[2] || null;
+    const phone = tds[3] || null;
 
     members.push({
-      member_name: memberName,
-      member_name_en: card.querySelector(".member-name-en, .name-en")?.textContent?.trim() || null,
-      company: card.querySelector(".company, .company-name, [data-company]")?.textContent?.trim() || null,
-      specialty: card.querySelector(".specialty, .profession, [data-specialty]")?.textContent?.trim() || null,
-      phone: null, // 전화번호는 HTML에서 의도적으로 파싱 안 함 (프론트엔드 미노출 원칙)
-      encrypted_member_id: (
-        card.getAttribute("data-member-id") ??
-        card.querySelector("a[href*='encryptedMemberId']")
-          ?.getAttribute("href")
-          ?.match(/encryptedMemberId=([^&]+)/)?.[1] ?? null
-      ),
+      member_name: nameKo || fullName,
+      member_name_en: nameEn !== nameKo ? nameEn : null,
+      company,
+      specialty,
+      phone,
+      encrypted_member_id: encryptedMemberId,
     });
   }
 
@@ -335,13 +318,47 @@ serve(async (req: any) => {
     // @ts-ignore
     const expectedSecret = Deno.env.get("UPDATE_CHAPTERS_SECRET") ?? "";
 
-    // Authorization 헤더 검증
+    // Authorization 헤더 검증: UPDATE_CHAPTERS_SECRET 또는 admin 사용자 JWT 허용
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "").trim();
 
-    if (!expectedSecret || token !== expectedSecret) {
+    let isAuthorized = false;
+
+    // 1차: UPDATE_CHAPTERS_SECRET 일치 확인 (CI/cron용)
+    if (expectedSecret && token === expectedSecret) {
+      isAuthorized = true;
+    }
+
+    // 2차: JWT 토큰이면 service_role 또는 admin 사용자인지 확인
+    if (!isAuthorized && token) {
+      try {
+        // JWT payload 디코딩 (서명 검증은 Supabase가 처리)
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        if (payload.role === "service_role") {
+          isAuthorized = true;
+        } else {
+          // 일반 사용자 JWT: admin role 확인 (Admin 페이지용)
+          const authClient = createClient(supabaseUrl, supabaseServiceKey);
+          const { data: { user }, error: userErr } = await authClient.auth.getUser(token);
+          if (!userErr && user) {
+            const { data: profile } = await authClient
+              .from("profiles")
+              .select("role")
+              .eq("id", user.id)
+              .single();
+            if (profile?.role === "admin") {
+              isAuthorized = true;
+            }
+          }
+        }
+      } catch {
+        // JWT 디코딩 실패 → 인증 실패
+      }
+    }
+
+    if (!isAuthorized) {
       return new Response(
-        JSON.stringify({ success: false, error: "인증 실패: 유효하지 않은 시크릿" }),
+        JSON.stringify({ success: false, error: "인증 실패: 관리자 권한이 필요합니다" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

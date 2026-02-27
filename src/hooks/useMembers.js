@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
+import { supabase, executeWithRetry } from '../lib/supabase';
 
 export const useMemberStore = create((set, get) => ({
   members: [],
@@ -16,23 +16,29 @@ export const useMemberStore = create((set, get) => ({
     const { chapterFilter, specialtySearch, page, pageSize } = get();
 
     set({ loading: true, error: null });
+    console.log('[Members] fetchMembers 시작, filter:', chapterFilter || '전체', 'search:', specialtySearch || '없음');
+    const t0 = performance.now();
 
     try {
-      let query = supabase
-        .from('chapter_members')
-        .select('*', { count: 'exact' })
-        .eq('is_active', true)
-        .order('chapter_name')
-        .order('member_name');
+      // executeWithRetry로 자동 재시도 및 세션 갱신
+      const { data, error, count } = await executeWithRetry(async () => {
+        let query = supabase
+          .from('chapter_members')
+          .select('*', { count: 'exact' })
+          .eq('is_active', true)
+          .order('chapter_name')
+          .order('member_name');
 
-      if (chapterFilter) query = query.eq('chapter_name', chapterFilter);
-      if (specialtySearch) query = query.ilike('specialty', `%${specialtySearch}%`);
-      query = query.range((page - 1) * pageSize, page * pageSize - 1);
+        if (chapterFilter) query = query.eq('chapter_name', chapterFilter);
+        if (specialtySearch) query = query.ilike('specialty', `%${specialtySearch}%`);
+        query = query.range((page - 1) * pageSize, page * pageSize - 1);
 
-      const { data, error, count } = await query;
+        return await query;
+      });
 
       if (error) throw error;
 
+      console.log(`[Members] 완료: ${(data||[]).length}건 (총 ${count}), ${(performance.now()-t0).toFixed(0)}ms`);
       set({
         members: data || [],
         totalCount: count || 0,
@@ -42,11 +48,12 @@ export const useMemberStore = create((set, get) => ({
       });
     } catch (error) {
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        console.log(`[Members] AbortError (무시)`);
         set({ loading: false });
         return;
       }
 
-      console.error('멤버 조회 에러:', error?.message || error);
+      console.error('[Members] 에러:', error?.message || error, `${(performance.now()-t0).toFixed(0)}ms`);
 
       set({
         members: [],

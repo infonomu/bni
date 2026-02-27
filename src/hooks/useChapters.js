@@ -38,6 +38,8 @@ export const useChapterStore = create((set, get) => ({
     if (get().initialized) return;
 
     set({ loading: true, error: null });
+    console.log('[Chapters] fetchChapters 시작');
+    const t0 = performance.now();
 
     try {
       const { data, error } = await supabase
@@ -49,6 +51,7 @@ export const useChapterStore = create((set, get) => ({
       if (error) throw error;
 
       if (data && data.length > 0) {
+        console.log(`[Chapters] 완료: ${data.length}개, ${(performance.now()-t0).toFixed(0)}ms`);
         const chapterNames = data.map((c) => c.name_ko).sort();
         set({ chapters: data, chapterNames, loading: false, error: null, initialized: true });
       } else {
