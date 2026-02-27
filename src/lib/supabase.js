@@ -19,14 +19,19 @@ const fetchWithRetry = async (url, options = {}) => {
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     try {
+      const t0 = performance.now();
       const response = await fetch(url, {
         ...options,
         signal: options.signal || controller.signal,
       });
       clearTimeout(timeoutId);
+      const path = url.replace(/https?:\/\/[^/]+/, '').split('?')[0];
+      console.log(`[Fetch] ${options?.method || 'GET'} ${path} → ${response.status} (${(performance.now()-t0).toFixed(0)}ms, attempt:${attempt})`);
       return response;
     } catch (error) {
       clearTimeout(timeoutId);
+      const path = url.replace(/https?:\/\/[^/]+/, '').split('?')[0];
+      console.warn(`[Fetch] ${path} 실패 (attempt:${attempt}): ${error.name} ${error.message?.substring(0,60)}`);
       // 외부에서 전달한 signal로 abort된 경우 (StrictMode 등) 재시도하지 않음
       if (options.signal?.aborted) throw error;
       // 마지막 시도면 에러 throw

@@ -35,6 +35,8 @@ export const useProductStore = create((set, get) => ({
   fetchProducts: async () => {
     const fetchId = ++currentFetchId;
     set({ loading: true, error: null });
+    console.log('[Products] fetchProducts 시작, fetchId:', fetchId);
+    const t0 = performance.now();
     try {
       const { category, searchQuery, sortBy, sortOrder } = get();
 
@@ -68,6 +70,7 @@ export const useProductStore = create((set, get) => ({
 
       if (error) throw error;
 
+      console.log(`[Products] 완료: ${(data||[]).length}건, ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
       set({ products: data || [], loading: false, error: null });
     } catch (error) {
       // 이 요청이 가장 최신 요청인지 확인
@@ -75,11 +78,12 @@ export const useProductStore = create((set, get) => ({
 
       // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        console.log(`[Products] AbortError (무시), fetchId:${fetchId}`);
         set({ loading: false });
         return;
       }
 
-      console.error('상품 조회 에러:', error?.message || error?.code || error);
+      console.error('[Products] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
 
       set({
         products: [],

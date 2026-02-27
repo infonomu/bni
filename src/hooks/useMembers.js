@@ -16,6 +16,8 @@ export const useMemberStore = create((set, get) => ({
     const { chapterFilter, specialtySearch, page, pageSize } = get();
 
     set({ loading: true, error: null });
+    console.log('[Members] fetchMembers 시작, filter:', chapterFilter || '전체', 'search:', specialtySearch || '없음');
+    const t0 = performance.now();
 
     try {
       // executeWithRetry로 자동 재시도 및 세션 갱신
@@ -36,6 +38,7 @@ export const useMemberStore = create((set, get) => ({
 
       if (error) throw error;
 
+      console.log(`[Members] 완료: ${(data||[]).length}건 (총 ${count}), ${(performance.now()-t0).toFixed(0)}ms`);
       set({
         members: data || [],
         totalCount: count || 0,
@@ -45,11 +48,12 @@ export const useMemberStore = create((set, get) => ({
       });
     } catch (error) {
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        console.log(`[Members] AbortError (무시)`);
         set({ loading: false });
         return;
       }
 
-      console.error('멤버 조회 에러:', error?.message || error);
+      console.error('[Members] 에러:', error?.message || error, `${(performance.now()-t0).toFixed(0)}ms`);
 
       set({
         members: [],

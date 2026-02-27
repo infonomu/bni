@@ -27,6 +27,8 @@ export const useDreamReferralStore = create((set, get) => ({
   fetchDreamReferrals: async () => {
     const fetchId = ++currentFetchId;
     set({ loading: true, error: null });
+    console.log('[DreamReferrals] fetchDreamReferrals 시작, fetchId:', fetchId);
+    const t0 = performance.now();
     try {
       const { category, searchQuery } = get();
 
@@ -58,17 +60,19 @@ export const useDreamReferralStore = create((set, get) => ({
       const { data, error } = result;
       if (error) throw error;
 
+      console.log(`[DreamReferrals] 완료: ${(data||[]).length}건, ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
       set({ dreamReferrals: data || [], loading: false, error: null });
     } catch (error) {
       if (fetchId !== currentFetchId) return;
 
       // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        console.log(`[DreamReferrals] AbortError (무시), fetchId:${fetchId}`);
         set({ loading: false });
         return;
       }
 
-      console.error('드림리퍼럴 조회 에러:', error?.message || error?.code || error);
+      console.error('[DreamReferrals] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
       set({
         dreamReferrals: [],
         loading: false,
