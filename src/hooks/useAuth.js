@@ -19,11 +19,18 @@ export const useAuthStore = create((set, get) => ({
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         set({ user: session.user });
-        await get().fetchProfile(session.user.id);
+        const profile = await get().fetchProfile(session.user.id);
+        // 앱 시작 시 suspended 계정 체크
+        if (profile?.status === 'suspended') {
+          await supabase.auth.signOut();
+          set({ user: null, profile: null });
+          throw new Error('suspended');
+        }
       }
     } catch (error) {
       // AbortError는 StrictMode에서 정상적으로 발생할 수 있음
       if (error.name === 'AbortError') return;
+      if (error.message === 'suspended') return;
       console.error('Auth 초기화 에러:', error);
     } finally {
       set({ loading: false });
@@ -33,7 +40,12 @@ export const useAuthStore = create((set, get) => ({
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         set({ user: session.user });
-        await get().fetchProfile(session.user.id);
+        const profile = await get().fetchProfile(session.user.id);
+        // 상태 변경 시 suspended 계정 체크
+        if (profile?.status === 'suspended') {
+          await supabase.auth.signOut();
+          set({ user: null, profile: null });
+        }
       } else {
         set({ user: null, profile: null });
       }
@@ -62,8 +74,10 @@ export const useAuthStore = create((set, get) => ({
 
       if (error) throw error;
       if (data) set({ profile: data });
+      return data;
     } catch (error) {
       console.error('프로필 조회 에러:', error);
+      return null;
     }
   },
 
@@ -131,7 +145,13 @@ export const useAuthStore = create((set, get) => ({
     // onAuthStateChange 리스너가 지연 호출될 수 있으므로 즉시 상태 반영
     if (data.user) {
       set({ user: data.user });
-      await get().fetchProfile(data.user.id);
+      const profile = await get().fetchProfile(data.user.id);
+      // 로그인 후 suspended 계정 차단
+      if (profile?.status === 'suspended') {
+        await supabase.auth.signOut();
+        set({ user: null, profile: null });
+        throw new Error('이 계정은 탈퇴 처리되어 로그인할 수 없습니다. 관리자에게 문의해주세요.');
+      }
     }
     return data;
   },
