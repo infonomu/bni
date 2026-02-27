@@ -48,13 +48,13 @@ export default function EditProduct() {
   const handleSubmit = async (formData, newImages, existingImages) => {
     setSaving(true);
     try {
-      // 새 이미지 압축 후 병렬 업로드
+      // 새 이미지 압축 후 순차 업로드 (대역폭 분산 방지)
       let newImageUrls = [];
       if (newImages.length > 0) {
         const compressedImages = await Promise.all(newImages.map((img) => compressImage(img)));
-        newImageUrls = await Promise.all(
-          compressedImages.map((img) => uploadImage(img, user.id))
-        );
+        for (const img of compressedImages) {
+          newImageUrls.push(await uploadImage(img, user.id));
+        }
       }
 
       // 기존 이미지 (삭제된 것 제외) + 새 이미지

@@ -171,7 +171,7 @@ export const useProductStore = create((set, get) => ({
       supabase.storage
         .from('product-images')
         .upload(fileName, file),
-      30000,
+      90000,
       '이미지 업로드 시간 초과'
     );
 

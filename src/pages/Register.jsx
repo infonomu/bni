@@ -47,11 +47,12 @@ export default function Register() {
 
     setLoading(true);
     try {
-      // 이미지 압축 후 병렬 업로드
+      // 이미지 압축 후 순차 업로드 (대역폭 분산 방지)
       const compressedImages = await Promise.all(images.map((img) => compressImage(img)));
-      const imageUrls = await Promise.all(
-        compressedImages.map((img) => uploadImage(img, user.id))
-      );
+      const imageUrls = [];
+      for (const img of compressedImages) {
+        imageUrls.push(await uploadImage(img, user.id));
+      }
 
       // 상품 생성
       await createProduct({

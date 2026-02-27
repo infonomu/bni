@@ -7,10 +7,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase 환경변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.');
 }
 
-// 글로벌 fetch 래퍼: 30초 타임아웃 + 자동 재시도 (cold start 대응)
+// 글로벌 fetch 래퍼: 타임아웃 + 자동 재시도 (cold start 대응)
+// Storage 업로드는 120초, 그 외 요청은 30초 타임아웃
 const fetchWithRetry = async (url, options = {}) => {
   const MAX_RETRIES = 2;
-  const TIMEOUT_MS = 30000;
+  const isStorageUpload = url.includes('/storage/') && options?.method === 'POST';
+  const TIMEOUT_MS = isStorageUpload ? 120000 : 30000;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const controller = new AbortController();
