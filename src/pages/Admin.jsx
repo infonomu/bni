@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { formatPrice } from '../utils/format';
+
+const TABS = [
+  { id: 'settings', label: '운영 설정' },
+  { id: 'products', label: '상품 관리' },
+  { id: 'members', label: '멤버 관리' },
+];
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -15,6 +21,17 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('settings');
 
+  // 멤버 관리 상태
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
+  const [suspendedMembers, setSuspendedMembers] = useState([]);
+  const [unmappedMembers, setUnmappedMembers] = useState([]);
+  const [profilesList, setProfilesList] = useState([]);
+  const [memberLoading, setMemberLoading] = useState(false);
+  const [restoringId, setRestoringId] = useState(null);
+  const [mappingId, setMappingId] = useState(null);
+  const [mappingValues, setMappingValues] = useState({});
+
   useEffect(() => {
     if (!authLoading && (!user || profile?.role !== 'admin')) {
       toast.error('관리자 권한이 필요합니다');
@@ -25,7 +42,6 @@ export default function Admin() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Promise.all로 병렬 실행 (성능 개선)
         const [
           settingsResult,
           productCountResult,
@@ -59,6 +75,49 @@ export default function Admin() {
     }
   }, [profile]);
 
+  const fetchMemberData = useCallback(async () => {
+    setMemberLoading(true);
+    try {
+      const [suspendedResult, unmappedResult, profilesResult] = await Promise.all([
+        // 탈퇴 처리된 프로필 목록
+        supabase
+          .from('profiles')
+          .select('id, name, chapter, specialty, company, email')
+          .eq('status', 'suspended')
+          .order('name'),
+        // 미매핑 chapter_members (profile_id = null, is_active = true)
+        supabase
+          .from('chapter_members')
+          .select('id, member_name, chapter_name, specialty, company, last_synced_at')
+          .is('profile_id', null)
+          .eq('is_active', true)
+          .order('chapter_name')
+          .order('member_name'),
+        // 드롭다운용 전체 프로필 목록
+        supabase
+          .from('profiles')
+          .select('id, name, chapter')
+          .eq('status', 'active')
+          .order('name'),
+      ]);
+
+      setSuspendedMembers(suspendedResult.data || []);
+      setUnmappedMembers(unmappedResult.data || []);
+      setProfilesList(profilesResult.data || []);
+    } catch (error) {
+      console.error('멤버 데이터 조회 에러:', error);
+      toast.error('멤버 데이터 조회에 실패했습니다');
+    } finally {
+      setMemberLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'members' && profile?.role === 'admin') {
+      fetchMemberData();
+    }
+  }, [activeTab, profile, fetchMemberData]);
+
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
@@ -89,6 +148,107 @@ export default function Admin() {
       toast.success(isActive ? '상품이 비활성화되었습니다' : '상품이 활성화되었습니다');
     } catch (error) {
       toast.error('상태 변경에 실패했습니다');
+    }
+  };
+
+  // 멤버 동기화 (update-members Edge Function 호출)
+  const handleSync = async () => {
+    setSyncLoading(true);
+    setSyncResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/update-members`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || '동기화 실패');
+      }
+
+      setSyncResult(result);
+      toast.success('멤버 동기화가 완료되었습니다');
+      // 동기화 후 멤버 데이터 갱신
+      await fetchMemberData();
+    } catch (error) {
+      console.error('동기화 에러:', error);
+      toast.error(`동기화 실패: ${error.message}`);
+      setSyncResult({ error: error.message });
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  // 탈퇴 멤버 복원 (status → 'active')
+  const handleRestoreMember = async (profileId) => {
+    setRestoringId(profileId);
+    try {
+      // profiles.status → 'active'
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ status: 'active' })
+        .eq('id', profileId);
+
+      if (profileError) throw profileError;
+
+      // chapter_members is_active=true, miss_count=0 (해당 profile_id로 매핑된 멤버)
+      const { error: memberError } = await supabase
+        .from('chapter_members')
+        .update({ is_active: true, miss_count: 0 })
+        .eq('profile_id', profileId);
+
+      if (memberError) console.error('chapter_members 복원 에러:', memberError);
+
+      setSuspendedMembers((prev) => prev.filter((m) => m.id !== profileId));
+      toast.success('멤버가 복원되었습니다. 상품이 자동으로 재노출됩니다.');
+    } catch (error) {
+      console.error('복원 에러:', error);
+      toast.error('복원에 실패했습니다');
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
+  // 미매핑 멤버에 profile_id 연결 (수동 매핑)
+  const handleMapMember = async (memberId) => {
+    const profileId = mappingValues[memberId];
+    if (!profileId) {
+      toast.error('연결할 프로필을 선택해주세요');
+      return;
+    }
+
+    setMappingId(memberId);
+    try {
+      const { error } = await supabase
+        .from('chapter_members')
+        .update({ profile_id: profileId })
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      setUnmappedMembers((prev) => prev.filter((m) => m.id !== memberId));
+      setMappingValues((prev) => {
+        const next = { ...prev };
+        delete next[memberId];
+        return next;
+      });
+      toast.success('멤버 매핑이 완료되었습니다');
+    } catch (error) {
+      console.error('매핑 에러:', error);
+      toast.error('매핑에 실패했습니다');
+    } finally {
+      setMappingId(null);
     }
   };
 
@@ -124,23 +284,18 @@ export default function Admin() {
       </div>
 
       {/* 탭 */}
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`px-4 py-2 rounded-lg font-medium ${
-            activeTab === 'settings' ? 'bg-primary-600 text-white' : 'bg-white'
-          }`}
-        >
-          운영 설정
-        </button>
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`px-4 py-2 rounded-lg font-medium ${
-            activeTab === 'products' ? 'bg-primary-600 text-white' : 'bg-white'
-          }`}
-        >
-          상품 관리
-        </button>
+      <div className="flex gap-2 mb-6">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === tab.id ? 'bg-primary-600 text-white' : 'bg-white hover:bg-slate-50'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* 운영 설정 */}
@@ -242,6 +397,173 @@ export default function Admin() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* 멤버 관리 */}
+      {activeTab === 'members' && (
+        <div className="space-y-8">
+          {/* 동기화 섹션 */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h3 className="text-lg font-bold mb-1">멤버 동기화</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              BNI 마포 사이트에서 전체 챕터 멤버 목록을 가져와 DB를 업데이트합니다.
+            </p>
+
+            <button
+              onClick={handleSync}
+              disabled={syncLoading}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {syncLoading ? (
+                <>
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  동기화 중...
+                </>
+              ) : (
+                '멤버 동기화 실행'
+              )}
+            </button>
+
+            {/* 동기화 결과 */}
+            {syncResult && !syncResult.error && (
+              <div className="mt-4 p-4 bg-slate-50 rounded-xl text-sm space-y-1">
+                <p className="font-semibold text-slate-700">동기화 결과</p>
+                {syncResult.synced_at && (
+                  <p className="text-slate-500">
+                    실행 시간: {new Date(syncResult.synced_at).toLocaleString('ko-KR')}
+                  </p>
+                )}
+                {syncResult.chapters_processed !== undefined && (
+                  <p className="text-slate-600">처리된 챕터: <span className="font-semibold">{syncResult.chapters_processed}개</span></p>
+                )}
+                {syncResult.total_members !== undefined && (
+                  <p className="text-slate-600">전체 멤버: <span className="font-semibold">{syncResult.total_members}명</span></p>
+                )}
+                {syncResult.new_members !== undefined && (
+                  <p className="text-green-700">신규 등록: <span className="font-semibold">{syncResult.new_members}명</span></p>
+                )}
+                {syncResult.updated_members !== undefined && (
+                  <p className="text-blue-700">갱신: <span className="font-semibold">{syncResult.updated_members}명</span></p>
+                )}
+                {syncResult.suspended_members !== undefined && (
+                  <p className="text-red-700">탈퇴 처리: <span className="font-semibold">{syncResult.suspended_members}명</span></p>
+                )}
+              </div>
+            )}
+            {syncResult?.error && (
+              <div className="mt-4 p-4 bg-red-50 rounded-xl text-sm text-red-700">
+                오류: {syncResult.error}
+              </div>
+            )}
+          </div>
+
+          {/* 탈퇴 멤버 목록 */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold">탈퇴 처리된 멤버</h3>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  복원 시 상품이 자동으로 재노출됩니다.
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-slate-500">
+                {memberLoading ? '-' : `${suspendedMembers.length}명`}
+              </span>
+            </div>
+
+            {memberLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-12 bg-slate-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : suspendedMembers.length === 0 ? (
+              <p className="text-slate-400 text-sm py-4 text-center">탈퇴 처리된 멤버가 없습니다.</p>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {suspendedMembers.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between py-3 gap-4">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-800 truncate">{member.name}</p>
+                      <p className="text-xs text-slate-500 truncate">
+                        {member.chapter} {member.specialty && `· ${member.specialty}`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleRestoreMember(member.id)}
+                      disabled={restoringId === member.id}
+                      className="shrink-0 px-3 py-1.5 text-xs font-semibold bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {restoringId === member.id ? '복원 중...' : '복원'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 미매핑 멤버 수동 매핑 */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold">미매핑 멤버</h3>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  홍보관 계정과 연결되지 않은 BNI 멤버 목록입니다.
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-slate-500">
+                {memberLoading ? '-' : `${unmappedMembers.length}명`}
+              </span>
+            </div>
+
+            {memberLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-16 bg-slate-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : unmappedMembers.length === 0 ? (
+              <p className="text-slate-400 text-sm py-4 text-center">미매핑 멤버가 없습니다.</p>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {unmappedMembers.map((member) => (
+                  <div key={member.id} className="py-4 space-y-3">
+                    <div>
+                      <p className="font-semibold text-slate-800">{member.member_name}</p>
+                      <p className="text-xs text-slate-500">
+                        {member.chapter_name} {member.specialty && `· ${member.specialty}`}
+                        {member.company && ` · ${member.company}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={mappingValues[member.id] || ''}
+                        onChange={(e) =>
+                          setMappingValues((prev) => ({ ...prev, [member.id]: e.target.value }))
+                        }
+                        className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                      >
+                        <option value="">프로필 선택...</option>
+                        {profilesList.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.chapter})
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => handleMapMember(member.id)}
+                        disabled={mappingId === member.id || !mappingValues[member.id]}
+                        className="shrink-0 px-3 py-2 text-sm font-semibold bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {mappingId === member.id ? '연결 중...' : '연결'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
