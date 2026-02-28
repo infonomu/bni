@@ -124,12 +124,12 @@ export const useProductStore = create((set, get) => ({
       const { data, error } = result;
 
       if (error) {
-        console.error('createProduct 에러:', error);
+        console.error('createProduct 에러:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint);
         throw error;
       }
       return { success: true, data };
     } catch (err) {
-      console.error('createProduct 예외:', err);
+      console.error('createProduct 예외:', err.message || JSON.stringify(err));
       throw err;
     }
   },
