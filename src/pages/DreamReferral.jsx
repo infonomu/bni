@@ -8,7 +8,6 @@ import DreamCard from '../components/dream/DreamCard';
 import DreamForm from '../components/dream/DreamForm';
 import DreamDetailModal from '../components/dream/DreamDetailModal';
 import CategoryFilter from '../components/product/CategoryFilter';
-import SearchBar from '../components/common/SearchBar';
 
 export default function DreamReferral() {
   const { user } = useAuthStore();
@@ -20,9 +19,7 @@ export default function DreamReferral() {
   const [selectedDream, setSelectedDream] = useState(null);
 
   useEffect(() => {
-    let cancelled = false;
-    if (!cancelled) fetchDreamReferrals();
-    return () => { cancelled = true; };
+    fetchDreamReferrals();
   }, [category, fetchDreamReferrals]);
 
   const uniqueMembers = new Set(dreamReferrals.map(d => d.user_id)).size;
@@ -120,15 +117,13 @@ export default function DreamReferral() {
       </section>
 
       {/* 필터 */}
-      {dreamReferrals.length > 0 && (
-        <section className="mb-8">
-          <CategoryFilter
-            categories={CATEGORIES}
-            selected={category}
-            onSelect={setCategory}
-          />
-        </section>
-      )}
+      <section className="mb-8">
+        <CategoryFilter
+          categories={CATEGORIES}
+          selected={category}
+          onSelect={setCategory}
+        />
+      </section>
 
       {/* 카드 그리드 */}
       <section>

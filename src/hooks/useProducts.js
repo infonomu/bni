@@ -40,8 +40,6 @@ export const useProductStore = create((set, get) => ({
     try {
       const { category, searchQuery, sortBy, sortOrder } = get();
 
-      // executeWithRetry로 자동 재시도 및 세션 갱신
-      // (글로벌 fetchWithRetry가 30초 타임아웃 + 2회 재시도 처리)
       const result = await executeWithRetry(async () => {
         let query = supabase
           .from('products')
@@ -63,25 +61,15 @@ export const useProductStore = create((set, get) => ({
         return await query;
       });
 
-      const { data, error } = result;
-
-      // 이 요청이 가장 최신 요청인지 확인
       if (fetchId !== currentFetchId) return;
 
+      const { data, error } = result;
       if (error) throw error;
 
       console.log(`[Products] 완료: ${(data||[]).length}건, ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
       set({ products: data || [], loading: false, error: null });
     } catch (error) {
-      // 이 요청이 가장 최신 요청인지 확인
       if (fetchId !== currentFetchId) return;
-
-      // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
-      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
-        console.log(`[Products] AbortError (무시), fetchId:${fetchId}`);
-        set({ loading: false });
-        return;
-      }
 
       console.error('[Products] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
 
@@ -124,12 +112,12 @@ export const useProductStore = create((set, get) => ({
       const { data, error } = result;
 
       if (error) {
-        console.error('createProduct 에러:', error);
+        console.error('createProduct 에러:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint);
         throw error;
       }
       return { success: true, data };
     } catch (err) {
-      console.error('createProduct 예외:', err);
+      console.error('createProduct 예외:', err.message || JSON.stringify(err));
       throw err;
     }
   },

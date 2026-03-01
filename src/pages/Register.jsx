@@ -45,6 +45,24 @@ export default function Register() {
   const handleSubmit = async (formData, images, _existingImages) => {
     if (!user) return;
 
+    // 클라이언트 측 유효성 검사
+    if (!formData.name || formData.name.length > 50) {
+      toast.error('상품명은 1~50자 이내로 입력해주세요.');
+      return;
+    }
+    if (formData.description && formData.description.length > 500) {
+      toast.error('설명은 500자 이내로 입력해주세요.');
+      return;
+    }
+    if (!formData.price || isNaN(formData.price) || formData.price <= 0) {
+      toast.error('올바른 가격을 입력해주세요.');
+      return;
+    }
+    if (formData.price_max !== null && formData.price_max !== undefined && formData.price_max < formData.price) {
+      toast.error('최대 가격은 최소 가격 이상이어야 합니다.');
+      return;
+    }
+
     setLoading(true);
     try {
       // 이미지 압축 후 순차 업로드 (대역폭 분산 방지)
@@ -54,9 +72,10 @@ export default function Register() {
         imageUrls.push(await uploadImage(img, user.id));
       }
 
-      // 상품 생성
+      // 상품 생성 (site_url 빈 문자열은 null로 변환)
       await createProduct({
         ...formData,
+        site_url: formData.site_url || null,
         seller_id: user.id,
         images: imageUrls,
       });
@@ -65,7 +84,9 @@ export default function Register() {
       navigate('/my-products');
     } catch (error) {
       console.error('상품 등록 에러:', error);
-      toast.error(error.message || '상품 등록에 실패했습니다.');
+      const msg = error.message || '상품 등록에 실패했습니다.';
+      console.error('상품 등록 상세:', JSON.stringify(error));
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

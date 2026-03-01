@@ -32,7 +32,10 @@ export default function MyProducts() {
   }, [authLoading, user, navigate]);
 
   const fetchData = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const currentFetchId = ++fetchIdRef.current;
     setLoading(true);

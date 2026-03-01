@@ -32,8 +32,6 @@ export const useDreamReferralStore = create((set, get) => ({
     try {
       const { category, searchQuery } = get();
 
-      // executeWithRetry로 자동 재시도 및 세션 갱신
-      // (글로벌 fetchWithRetry가 30초 타임아웃 + 2회 재시도 처리)
       const result = await executeWithRetry(async () => {
         let query = supabase
           .from('dream_referrals')
@@ -64,13 +62,6 @@ export const useDreamReferralStore = create((set, get) => ({
       set({ dreamReferrals: data || [], loading: false, error: null });
     } catch (error) {
       if (fetchId !== currentFetchId) return;
-
-      // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
-      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
-        console.log(`[DreamReferrals] AbortError (무시), fetchId:${fetchId}`);
-        set({ loading: false });
-        return;
-      }
 
       console.error('[DreamReferrals] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
       set({

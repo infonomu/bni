@@ -11,9 +11,7 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
-    let cancelled = false;
-    if (!cancelled) fetchProducts();
-    return () => { cancelled = true; };
+    fetchProducts();
   }, [category, fetchProducts]);
 
   return (
