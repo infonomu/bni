@@ -32,7 +32,7 @@ export const useProductStore = create((set, get) => ({
   setSortBy: (sortBy) => set({ sortBy }),
   clearError: () => set({ error: null }),
 
-  fetchProducts: async (signal) => {
+  fetchProducts: async () => {
     const fetchId = ++currentFetchId;
     set({ loading: true, error: null });
     console.log('[Products] fetchProducts 시작, fetchId:', fetchId);
@@ -58,35 +58,26 @@ export const useProductStore = create((set, get) => ({
 
         query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-        if (signal) query = query.abortSignal(signal);
-
         return await query;
       });
 
-      const { data, error } = result;
-
       if (fetchId !== currentFetchId) return;
 
+      const { data, error } = result;
       if (error) throw error;
 
       console.log(`[Products] 완료: ${(data||[]).length}건, ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
-      set({ products: data || [], error: null });
+      set({ products: data || [], loading: false, error: null });
     } catch (error) {
       if (fetchId !== currentFetchId) return;
-
-      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
-        console.log(`[Products] AbortError (무시), fetchId:${fetchId}`);
-        return;
-      }
 
       console.error('[Products] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
 
       set({
         products: [],
+        loading: false,
         error: isAuthError(error) ? 'session_expired' : 'fetch_error'
       });
-    } finally {
-      if (fetchId === currentFetchId) set({ loading: false });
     }
   },
 

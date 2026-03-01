@@ -11,9 +11,7 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-    fetchProducts(controller.signal);
-    return () => controller.abort();
+    fetchProducts();
   }, [category, fetchProducts]);
 
   return (

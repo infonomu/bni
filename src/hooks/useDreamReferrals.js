@@ -24,7 +24,7 @@ export const useDreamReferralStore = create((set, get) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   clearError: () => set({ error: null }),
 
-  fetchDreamReferrals: async (signal) => {
+  fetchDreamReferrals: async () => {
     const fetchId = ++currentFetchId;
     set({ loading: true, error: null });
     console.log('[DreamReferrals] fetchDreamReferrals 시작, fetchId:', fetchId);
@@ -50,8 +50,6 @@ export const useDreamReferralStore = create((set, get) => ({
 
         query = query.order('created_at', { ascending: false });
 
-        if (signal) query = query.abortSignal(signal);
-
         return await query;
       });
 
@@ -61,22 +59,16 @@ export const useDreamReferralStore = create((set, get) => ({
       if (error) throw error;
 
       console.log(`[DreamReferrals] 완료: ${(data||[]).length}건, ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
-      set({ dreamReferrals: data || [], error: null });
+      set({ dreamReferrals: data || [], loading: false, error: null });
     } catch (error) {
       if (fetchId !== currentFetchId) return;
-
-      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
-        console.log(`[DreamReferrals] AbortError (무시), fetchId:${fetchId}`);
-        return;
-      }
 
       console.error('[DreamReferrals] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
       set({
         dreamReferrals: [],
+        loading: false,
         error: isAuthError(error) ? 'session_expired' : 'fetch_error'
       });
-    } finally {
-      if (fetchId === currentFetchId) set({ loading: false });
     }
   },
 

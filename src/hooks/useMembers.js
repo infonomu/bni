@@ -47,6 +47,7 @@ export const useMemberStore = create((set, get) => ({
       set({
         members: data || [],
         totalCount: count || 0,
+        loading: false,
         initialized: true,
         error: null,
       });
@@ -55,6 +56,7 @@ export const useMemberStore = create((set, get) => ({
 
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
         console.log(`[Members] AbortError (무시), fetchId:${fetchId}`);
+        set({ loading: false });
         return;
       }
 
@@ -62,11 +64,10 @@ export const useMemberStore = create((set, get) => ({
 
       set({
         members: [],
+        loading: false,
         initialized: true,
         error: 'fetch_error',
       });
-    } finally {
-      if (fetchId === currentFetchId) set({ loading: false });
     }
   },
 
