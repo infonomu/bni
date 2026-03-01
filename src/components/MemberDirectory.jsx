@@ -27,10 +27,6 @@ export default function MemberDirectory() {
     fetchChapters();
   }, [fetchChapters]);
 
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
-
   // 검색어 디바운스 처리
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,11 +37,9 @@ export default function MemberDirectory() {
     return () => clearTimeout(timer);
   }, [searchInput, specialtySearch, setSpecialtySearch]);
 
-  // 검색어 변경 후 멤버 재조회
+  // 초기 로드 + 검색어 변경 시 멤버 재조회
   useEffect(() => {
-    if (specialtySearch !== undefined) {
-      fetchMembers();
-    }
+    fetchMembers();
   }, [specialtySearch, fetchMembers]);
 
   const totalPages = Math.ceil(totalCount / pageSize);

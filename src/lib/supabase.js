@@ -108,16 +108,10 @@ export const executeWithRetry = async (queryFn, options = {}) => {
       return result;
     } catch (error) {
       // AbortError는 호출자가 처리하도록 re-throw
-      // (기존: {data:null, error:null} 반환 → 빈 목록으로 잘못 표시되는 버그)
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
         throw error;
       }
-      // 네트워크 에러 등 예외 발생 시
-      if (attempt < maxRetries) {
-        console.log(`요청 실패, 재시도... (${attempt + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, retryDelay * (attempt + 1)));
-        continue;
-      }
+      // 네트워크 에러: fetchWithRetry가 이미 재시도하므로 여기서는 즉시 throw
       throw error;
     }
   }

@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { supabase, executeWithRetry } from '../lib/supabase';
 
+// 요청 ID 관리 (race condition 방지)
+let currentFetchId = 0;
+
 export const useMemberStore = create((set, get) => ({
   members: [],
   loading: false,
@@ -13,14 +16,14 @@ export const useMemberStore = create((set, get) => ({
   totalCount: 0,
 
   fetchMembers: async () => {
+    const fetchId = ++currentFetchId;
     const { chapterFilter, specialtySearch, page, pageSize } = get();
 
     set({ loading: true, error: null });
-    console.log('[Members] fetchMembers 시작, filter:', chapterFilter || '전체', 'search:', specialtySearch || '없음');
+    console.log('[Members] fetchMembers 시작, fetchId:', fetchId, 'filter:', chapterFilter || '전체', 'search:', specialtySearch || '없음');
     const t0 = performance.now();
 
     try {
-      // executeWithRetry로 자동 재시도 및 세션 갱신
       const { data, error, count } = await executeWithRetry(async () => {
         let query = supabase
           .from('chapter_members')
@@ -36,20 +39,22 @@ export const useMemberStore = create((set, get) => ({
         return await query;
       });
 
+      if (fetchId !== currentFetchId) return;
+
       if (error) throw error;
 
-      console.log(`[Members] 완료: ${(data||[]).length}건 (총 ${count}), ${(performance.now()-t0).toFixed(0)}ms`);
+      console.log(`[Members] 완료: ${(data||[]).length}건 (총 ${count}), ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
       set({
         members: data || [],
         totalCount: count || 0,
-        loading: false,
         initialized: true,
         error: null,
       });
     } catch (error) {
+      if (fetchId !== currentFetchId) return;
+
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
-        console.log(`[Members] AbortError (무시)`);
-        set({ loading: false });
+        console.log(`[Members] AbortError (무시), fetchId:${fetchId}`);
         return;
       }
 
@@ -57,10 +62,11 @@ export const useMemberStore = create((set, get) => ({
 
       set({
         members: [],
-        loading: false,
         initialized: true,
         error: 'fetch_error',
       });
+    } finally {
+      if (fetchId === currentFetchId) set({ loading: false });
     }
   },
 

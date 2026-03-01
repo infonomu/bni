@@ -24,7 +24,7 @@ export const useDreamReferralStore = create((set, get) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   clearError: () => set({ error: null }),
 
-  fetchDreamReferrals: async () => {
+  fetchDreamReferrals: async (signal) => {
     const fetchId = ++currentFetchId;
     set({ loading: true, error: null });
     console.log('[DreamReferrals] fetchDreamReferrals 시작, fetchId:', fetchId);
@@ -32,8 +32,6 @@ export const useDreamReferralStore = create((set, get) => ({
     try {
       const { category, searchQuery } = get();
 
-      // executeWithRetry로 자동 재시도 및 세션 갱신
-      // (글로벌 fetchWithRetry가 30초 타임아웃 + 2회 재시도 처리)
       const result = await executeWithRetry(async () => {
         let query = supabase
           .from('dream_referrals')
@@ -52,6 +50,8 @@ export const useDreamReferralStore = create((set, get) => ({
 
         query = query.order('created_at', { ascending: false });
 
+        if (signal) query = query.abortSignal(signal);
+
         return await query;
       });
 
@@ -61,23 +61,22 @@ export const useDreamReferralStore = create((set, get) => ({
       if (error) throw error;
 
       console.log(`[DreamReferrals] 완료: ${(data||[]).length}건, ${(performance.now()-t0).toFixed(0)}ms, fetchId:${fetchId}`);
-      set({ dreamReferrals: data || [], loading: false, error: null });
+      set({ dreamReferrals: data || [], error: null });
     } catch (error) {
       if (fetchId !== currentFetchId) return;
 
-      // AbortError는 StrictMode 이중 마운트에서 정상적으로 발생
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
         console.log(`[DreamReferrals] AbortError (무시), fetchId:${fetchId}`);
-        set({ loading: false });
         return;
       }
 
       console.error('[DreamReferrals] 에러:', error?.message || error?.code || error, `${(performance.now()-t0).toFixed(0)}ms`);
       set({
         dreamReferrals: [],
-        loading: false,
         error: isAuthError(error) ? 'session_expired' : 'fetch_error'
       });
+    } finally {
+      if (fetchId === currentFetchId) set({ loading: false });
     }
   },
 
