@@ -5,6 +5,7 @@ import ProductCard from '../components/product/ProductCard';
 import ProductModal from '../components/product/ProductModal';
 import CategoryFilter from '../components/product/CategoryFilter';
 import SearchBar from '../components/common/SearchBar';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Home() {
   const { products, loading, error, fetchProducts, category, setCategory, clearError } = useProductStore();
@@ -54,10 +55,7 @@ export default function Home() {
       {/* 상품 그리드 */}
       <section>
         {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent" />
-            <p className="mt-4 text-brown/60">상품을 불러오는 중...</p>
-          </div>
+          <LoadingSpinner message="상품을 불러오는 중..." />
         ) : error ? (
           <div className="text-center py-12">
             <span className="text-6xl">⚠️</span>

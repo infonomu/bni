@@ -9,6 +9,7 @@ import { useDreamReferralStore } from '../hooks/useDreamReferrals';
 import { supabase, executeWithRetry, isAuthError } from '../lib/supabase';
 import { formatPrice } from '../utils/format';
 import { CATEGORIES } from '../utils/constants';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function MyProducts() {
   const navigate = useNavigate();
@@ -176,11 +177,7 @@ export default function MyProducts() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent" />
-      </div>
-    );
+    return <LoadingSpinner message="데이터를 불러오는 중..." />;
   }
 
   if (error) {

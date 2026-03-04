@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { formatPrice } from '../utils/format';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const TABS = [
   { id: 'settings', label: '운영 설정' },
@@ -253,11 +254,7 @@ export default function Admin() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent" />
-      </div>
-    );
+    return <LoadingSpinner message="관리자 데이터를 불러오는 중..." />;
   }
 
   return (

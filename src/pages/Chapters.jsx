@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useChapterStore } from '../hooks/useChapters';
 import ChapterCard from '../components/chapter/ChapterCard';
 import MemberDirectory from '../components/MemberDirectory';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const TABS = [
   { id: 'chapters', label: '챕터 정보' },
@@ -65,22 +66,7 @@ export default function Chapters() {
       {activeTab === 'chapters' ? (
         <section>
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse">
-                  <div className="h-1.5 bg-slate-200" />
-                  <div className="p-6 space-y-4">
-                    <div className="h-7 bg-slate-200 rounded w-3/4" />
-                    <div className="h-4 bg-slate-200 rounded w-1/2" />
-                    <div className="space-y-2">
-                      <div className="h-4 bg-slate-200 rounded w-2/3" />
-                      <div className="h-4 bg-slate-200 rounded w-full" />
-                    </div>
-                    <div className="h-10 bg-slate-200 rounded-xl mt-auto" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <LoadingSpinner message="챕터 정보를 불러오는 중..." />
           ) : error ? (
             <div className="text-center py-16">
               <p className="text-slate-500 text-lg mb-2">챕터 정보를 불러오는 중 오류가 발생했습니다.</p>
