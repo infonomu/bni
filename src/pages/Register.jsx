@@ -73,9 +73,8 @@ export default function Register() {
         // 1단계: 이미지 압축
         const compressedImages = [];
         for (let i = 0; i < images.length; i++) {
-          setLoadingStep(`이미지 압축 중... (${i + 1}/${images.length})`);
           try {
-            compressedImages.push(await compressImage(images[i]));
+            compressedImages.push(await compressImage(images[i], (p) => setLoadingStep(`이미지 압축 중... (${i + 1}/${images.length}) ${p}%`)));
           } catch (err) {
             toast.error(`이미지 "${images[i].name}" 압축 실패: ${err.message}`);
             setLoading(false);
