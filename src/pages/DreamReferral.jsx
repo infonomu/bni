@@ -8,6 +8,7 @@ import DreamCard from '../components/dream/DreamCard';
 import DreamForm from '../components/dream/DreamForm';
 import DreamDetailModal from '../components/dream/DreamDetailModal';
 import CategoryFilter from '../components/product/CategoryFilter';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function DreamReferral() {
   const { user } = useAuthStore();
@@ -128,10 +129,7 @@ export default function DreamReferral() {
       {/* 카드 그리드 */}
       <section>
         {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent" />
-            <p className="mt-4 text-slate-500">드림리퍼럴을 불러오는 중...</p>
-          </div>
+          <LoadingSpinner message="드림리퍼럴을 불러오는 중..." color="amber-500" />
         ) : error ? (
           <div className="text-center py-12">
             <span className="text-6xl">⚠️</span>

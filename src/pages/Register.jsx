@@ -6,6 +6,7 @@ import { useProductStore } from '../hooks/useProducts';
 import { CATEGORIES } from '../utils/constants';
 import ProductForm from '../components/product/ProductForm';
 import { compressImage } from '../utils/image';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -93,11 +94,7 @@ export default function Register() {
   };
 
   if (authLoading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent" />
-      </div>
-    );
+    return <LoadingSpinner message="인증 확인 중..." />;
   }
 
   return (

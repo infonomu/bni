@@ -81,11 +81,17 @@ const refreshSession = async () => {
   }
 };
 
-// 재시도 로직이 포함된 쿼리 실행 함수
+// 재시도 로직이 포함된 쿼리 실행 함수 (총 대기 시간 60초 캡)
 export const executeWithRetry = async (queryFn, options = {}) => {
-  const { maxRetries = 2, retryDelay = 500 } = options;
+  const { maxRetries = 2, retryDelay = 500, totalTimeoutMs = 60000 } = options;
+  const startTime = Date.now();
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // 총 대기 시간 초과 시 즉시 중단
+    if (Date.now() - startTime >= totalTimeoutMs) {
+      return { data: null, error: { message: '요청 시간이 초과되었습니다.' } };
+    }
+
     try {
       const result = await queryFn();
 
@@ -93,6 +99,10 @@ export const executeWithRetry = async (queryFn, options = {}) => {
       if (result.error) {
         // 인증 에러면 세션 갱신 시도
         if (isAuthError(result.error) && attempt < maxRetries) {
+          // 남은 시간 확인
+          if (Date.now() - startTime >= totalTimeoutMs) {
+            return result;
+          }
           console.log(`인증 에러 감지, 세션 갱신 시도... (${attempt + 1}/${maxRetries})`);
           const refreshed = await refreshSession();
           if (refreshed) {

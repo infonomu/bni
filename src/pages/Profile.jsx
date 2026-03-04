@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
 import { useChapterStore } from '../hooks/useChapters';
 import AddressSearch from '../components/common/AddressSearch';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -71,11 +72,7 @@ export default function Profile() {
   };
 
   if (authLoading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent" />
-      </div>
-    );
+    return <LoadingSpinner message="프로필을 불러오는 중..." />;
   }
 
   return (
