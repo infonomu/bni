@@ -13,6 +13,7 @@ export default function Register() {
   const { user, profile, loading: authLoading } = useAuthStore();
   const { createProduct, uploadImage } = useProductStore();
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -66,14 +67,46 @@ export default function Register() {
 
     setLoading(true);
     try {
-      // 이미지 압축 후 순차 업로드 (대역폭 분산 방지)
-      const compressedImages = await Promise.all(images.map((img) => compressImage(img)));
       const imageUrls = [];
-      for (const img of compressedImages) {
-        imageUrls.push(await uploadImage(img, user.id));
+
+      if (images.length > 0) {
+        // 1단계: 이미지 압축
+        const compressedImages = [];
+        for (let i = 0; i < images.length; i++) {
+          setLoadingStep(`이미지 압축 중... (${i + 1}/${images.length})`);
+          try {
+            compressedImages.push(await compressImage(images[i]));
+          } catch (err) {
+            toast.error(`이미지 "${images[i].name}" 압축 실패: ${err.message}`);
+            setLoading(false);
+            setLoadingStep('');
+            return;
+          }
+        }
+
+        // 2단계: 이미지 업로드
+        for (let i = 0; i < compressedImages.length; i++) {
+          setLoadingStep(`이미지 업로드 중... (${i + 1}/${compressedImages.length})`);
+          try {
+            imageUrls.push(await uploadImage(compressedImages[i], user.id));
+          } catch (err) {
+            const errMsg = err.message || '';
+            if (errMsg.includes('시간 초과')) {
+              toast.error(`이미지 "${images[i].name}" 업로드 시간 초과. 파일 크기를 줄이거나 네트워크를 확인해주세요.`);
+            } else if (errMsg.includes('Payload too large') || errMsg.includes('413')) {
+              toast.error(`이미지 "${images[i].name}"이 너무 큽니다. 5MB 이하의 이미지를 사용해주세요.`);
+            } else {
+              toast.error(`이미지 "${images[i].name}" 업로드 실패: ${errMsg}`);
+            }
+            setLoading(false);
+            setLoadingStep('');
+            return;
+          }
+        }
       }
 
-      // 상품 생성 (site_url 빈 문자열은 null로 변환)
+      // 3단계: 상품 등록
+      setLoadingStep('상품 등록 중...');
       await createProduct({
         ...formData,
         site_url: formData.site_url || null,
@@ -86,10 +119,10 @@ export default function Register() {
     } catch (error) {
       console.error('상품 등록 에러:', error);
       const msg = error.message || '상품 등록에 실패했습니다.';
-      console.error('상품 등록 상세:', JSON.stringify(error));
       toast.error(msg);
     } finally {
       setLoading(false);
+      setLoadingStep('');
     }
   };
 
@@ -116,6 +149,7 @@ export default function Register() {
         profile={profile}
         onSubmit={handleSubmit}
         loading={loading}
+        loadingStep={loadingStep}
       />
     </div>
   );

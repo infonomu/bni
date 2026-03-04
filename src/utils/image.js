@@ -7,6 +7,13 @@
  */
 export function compressImage(file, maxWidth = 800, quality = 0.6) {
   return new Promise((resolve, reject) => {
+    // 지원하지 않는 형식 사전 차단 (HEIF/HEIC 등)
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (['heif', 'heic', 'tiff', 'bmp', 'svg'].includes(ext)) {
+      reject(new Error(`${ext.toUpperCase()} 형식은 지원하지 않습니다. JPG, PNG, WebP로 변환해주세요.`));
+      return;
+    }
+
     // 이미 작은 파일은 압축하지 않음
     if (file.size < 500 * 1024) {
       resolve(file);

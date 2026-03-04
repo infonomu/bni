@@ -2,12 +2,16 @@ import { useState, useRef } from 'react';
 import { HiOutlinePhoto, HiOutlineXMark, HiOutlineGlobeAlt } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 
+// iPhone HEIF/HEIC 확장자 체크
+const UNSUPPORTED_EXTENSIONS = ['.heif', '.heic', '.tiff', '.bmp', '.svg'];
+
 export default function ProductForm({
   categories,
   profile,
   initialData,
   onSubmit,
   loading,
+  loadingStep = '',
   isEdit = false,
 }) {
   const [formData, setFormData] = useState({
@@ -33,12 +37,18 @@ export default function ProductForm({
     }
 
     const validFiles = files.filter(file => {
+      // HEIF/HEIC 등 미지원 확장자 체크 (iPhone 사진 등)
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if (UNSUPPORTED_EXTENSIONS.includes(ext)) {
+        toast.error(`${file.name}: ${ext.toUpperCase()} 형식은 지원하지 않습니다. JPG, PNG, WebP 형식으로 변환 후 업로드해주세요.`);
+        return false;
+      }
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name}은 5MB를 초과합니다.`);
+        toast.error(`${file.name}은 5MB를 초과합니다. 이미지 크기를 줄여주세요.`);
         return false;
       }
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        toast.error(`${file.name}은 지원하지 않는 형식입니다.`);
+        toast.error(`${file.name}: 지원하지 않는 형식입니다. JPG, PNG, WebP만 가능합니다.`);
         return false;
       }
       return true;
@@ -218,7 +228,7 @@ export default function ProductForm({
       {/* 이미지 업로드 */}
       <div>
         <label className="block text-sm font-medium mb-2">
-          상품 이미지 (최대 3장, 각 5MB 이하)
+          상품 이미지 (최대 3장, 각 5MB 이하, JPG/PNG/WebP)
         </label>
         <div className="flex flex-wrap gap-3">
           {/* 기존 이미지 */}
@@ -277,6 +287,9 @@ export default function ProductForm({
           onChange={handleImageChange}
           className="hidden"
         />
+        <p className="text-xs text-brown/40 mt-2">
+          iPhone 사진(HEIC)은 지원하지 않습니다. 갤러리에서 JPG로 변환하거나 스크린샷을 사용해주세요.
+        </p>
       </div>
 
       {/* 판매자 정보 (읽기 전용) */}
@@ -293,7 +306,7 @@ export default function ProductForm({
         disabled={loading}
         className="w-full py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? '처리 중...' : isEdit ? '수정하기' : '등록하기'}
+        {loading ? (loadingStep || '처리 중...') : isEdit ? '수정하기' : '등록하기'}
       </button>
     </form>
   );

@@ -16,6 +16,7 @@ export default function EditProduct() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadingStep, setLoadingStep] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -49,16 +50,43 @@ export default function EditProduct() {
   const handleSubmit = async (formData, newImages, existingImages) => {
     setSaving(true);
     try {
-      // 새 이미지 압축 후 순차 업로드 (대역폭 분산 방지)
       let newImageUrls = [];
       if (newImages.length > 0) {
-        const compressedImages = await Promise.all(newImages.map((img) => compressImage(img)));
-        for (const img of compressedImages) {
-          newImageUrls.push(await uploadImage(img, user.id));
+        // 1단계: 이미지 압축
+        const compressedImages = [];
+        for (let i = 0; i < newImages.length; i++) {
+          setLoadingStep(`이미지 압축 중... (${i + 1}/${newImages.length})`);
+          try {
+            compressedImages.push(await compressImage(newImages[i]));
+          } catch (err) {
+            toast.error(`이미지 "${newImages[i].name}" 압축 실패: ${err.message}`);
+            setSaving(false);
+            setLoadingStep('');
+            return;
+          }
+        }
+
+        // 2단계: 이미지 업로드
+        for (let i = 0; i < compressedImages.length; i++) {
+          setLoadingStep(`이미지 업로드 중... (${i + 1}/${compressedImages.length})`);
+          try {
+            newImageUrls.push(await uploadImage(compressedImages[i], user.id));
+          } catch (err) {
+            const errMsg = err.message || '';
+            if (errMsg.includes('시간 초과')) {
+              toast.error(`이미지 "${newImages[i].name}" 업로드 시간 초과. 파일 크기를 줄이거나 네트워크를 확인해주세요.`);
+            } else {
+              toast.error(`이미지 "${newImages[i].name}" 업로드 실패: ${errMsg}`);
+            }
+            setSaving(false);
+            setLoadingStep('');
+            return;
+          }
         }
       }
 
-      // 기존 이미지 (삭제된 것 제외) + 새 이미지
+      // 3단계: 상품 수정
+      setLoadingStep('상품 수정 중...');
       const allImages = [...(existingImages || []), ...newImageUrls];
 
       await updateProduct(id, {
@@ -72,6 +100,7 @@ export default function EditProduct() {
       toast.error(error.message || '상품 수정에 실패했습니다.');
     } finally {
       setSaving(false);
+      setLoadingStep('');
     }
   };
 
@@ -96,6 +125,7 @@ export default function EditProduct() {
         initialData={product}
         onSubmit={handleSubmit}
         loading={saving}
+        loadingStep={loadingStep}
         isEdit
       />
     </div>
