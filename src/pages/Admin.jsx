@@ -19,6 +19,7 @@ export default function Admin() {
   const [stats, setStats] = useState({ products: 0, orders: 0, members: 0 });
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('settings');
 
@@ -40,41 +41,44 @@ export default function Admin() {
     }
   }, [authLoading, user, profile, navigate]);
 
+  const fetchData = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const [
+        settingsResult,
+        productCountResult,
+        orderCountResult,
+        memberCountResult,
+        productsResult
+      ] = await Promise.all([
+        supabase.from('settings').select('*').single(),
+        supabase.from('products').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('products').select('*, profiles(name)').order('created_at', { ascending: false })
+      ]);
+
+      setSettings(settingsResult.data);
+      setStats({
+        products: productCountResult.count,
+        orders: orderCountResult.count,
+        members: memberCountResult.count
+      });
+      setProducts(productsResult.data || []);
+    } catch (err) {
+      console.error('데이터 조회 에러:', err);
+      setError('fetch_error');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [
-          settingsResult,
-          productCountResult,
-          orderCountResult,
-          memberCountResult,
-          productsResult
-        ] = await Promise.all([
-          supabase.from('settings').select('*').single(),
-          supabase.from('products').select('*', { count: 'exact', head: true }),
-          supabase.from('orders').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
-          supabase.from('products').select('*, profiles(name)').order('created_at', { ascending: false })
-        ]);
-
-        setSettings(settingsResult.data);
-        setStats({
-          products: productCountResult.count,
-          orders: orderCountResult.count,
-          members: memberCountResult.count
-        });
-        setProducts(productsResult.data || []);
-      } catch (error) {
-        console.error('데이터 조회 에러:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (profile?.role === 'admin') {
       fetchData();
     }
-  }, [profile]);
+  }, [profile?.role, fetchData]);
 
   const fetchMemberData = useCallback(async () => {
     setMemberLoading(true);
@@ -117,7 +121,7 @@ export default function Admin() {
     if (activeTab === 'members' && profile?.role === 'admin') {
       fetchMemberData();
     }
-  }, [activeTab, profile, fetchMemberData]);
+  }, [activeTab, profile?.role, fetchMemberData]);
 
   const handleSaveSettings = async () => {
     setSaving(true);
@@ -255,6 +259,22 @@ export default function Admin() {
 
   if (authLoading || loading) {
     return <LoadingSpinner message="관리자 데이터를 불러오는 중..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center py-20">
+        <span className="text-6xl">⚠️</span>
+        <p className="mt-4 text-brown/60">관리자 데이터를 불러오는 중 오류가 발생했습니다.</p>
+        <p className="text-sm text-brown/40">잠시 후 다시 시도해주세요.</p>
+        <button
+          onClick={fetchData}
+          className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          다시 시도
+        </button>
+      </div>
+    );
   }
 
   return (

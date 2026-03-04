@@ -100,7 +100,7 @@ export default function MyProducts() {
 
   useEffect(() => {
     fetchData();
-  }, [user]);
+  }, [user?.id]);
 
   const handleDelete = (productId) => {
     toast((t) => (

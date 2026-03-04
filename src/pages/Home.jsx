@@ -8,12 +8,12 @@ import SearchBar from '../components/common/SearchBar';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Home() {
-  const { products, loading, error, fetchProducts, category, setCategory, clearError } = useProductStore();
+  const { products, loading, error, fetchProducts, category, setCategory, searchQuery, clearError } = useProductStore();
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     fetchProducts();
-  }, [category, fetchProducts]);
+  }, [category, searchQuery, fetchProducts]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
