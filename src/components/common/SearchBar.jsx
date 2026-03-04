@@ -3,7 +3,7 @@ import { HiOutlineMagnifyingGlass } from 'react-icons/hi2';
 import { useProductStore } from '../../hooks/useProducts';
 
 export default function SearchBar() {
-  const { searchQuery, setSearchQuery, fetchProducts } = useProductStore();
+  const { searchQuery, setSearchQuery } = useProductStore();
   const [localQuery, setLocalQuery] = useState(searchQuery);
 
   // 외부 searchQuery 변경 시 동기화
@@ -16,12 +16,11 @@ export default function SearchBar() {
     const timer = setTimeout(() => {
       if (localQuery !== searchQuery) {
         setSearchQuery(localQuery);
-        fetchProducts();
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [localQuery, searchQuery, setSearchQuery, fetchProducts]);
+  }, [localQuery, searchQuery, setSearchQuery]);
 
   return (
     <div className="relative mb-4">
