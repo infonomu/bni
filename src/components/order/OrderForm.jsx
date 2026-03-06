@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../hooks/useAuth';
 import { useOrders } from '../../hooks/useOrders';
+import { isAuthError } from '../../lib/supabase';
 import { formatPrice } from '../../utils/format';
 import AddressSearch from '../common/AddressSearch';
 
 export default function OrderForm({ product, onSuccess }) {
+  const navigate = useNavigate();
   const { user, profile } = useAuthStore();
   const { createOrder } = useOrders();
   const [formData, setFormData] = useState({
@@ -79,7 +82,13 @@ export default function OrderForm({ product, onSuccess }) {
       toast.success('주문이 요청되었습니다! 확인 이메일이 발송됩니다.');
       onSuccess?.();
     } catch (error) {
-      toast.error(error.message || '주문 요청에 실패했습니다');
+      const msg = error.message || '';
+      if (msg.includes('로그인이 필요합니다') || msg.includes('세션이 만료되었습니다') || isAuthError(error)) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
+      toast.error(msg || '주문 요청에 실패했습니다');
     } finally {
       setLoading(false);
     }

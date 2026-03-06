@@ -1,17 +1,8 @@
 import { create } from 'zustand';
-import { supabase, executeWithRetry, isAuthError } from '../lib/supabase';
+import { supabase, executeWithRetry, isAuthError, ensureValidSession } from '../lib/supabase';
 
 // 요청 ID 관리 (race condition 방지)
 let currentFetchId = 0;
-
-// 타임아웃 유틸리티 함수 (타이머 정리 포함)
-const withTimeout = (promise, ms, message) => {
-  let timeoutId;
-  const timeout = new Promise((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(message)), ms);
-  });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
-};
 
 export const useDreamReferralStore = create((set, get) => ({
   dreamReferrals: [],
@@ -73,10 +64,10 @@ export const useDreamReferralStore = create((set, get) => ({
   },
 
   createDreamReferral: async (data) => {
-    const result = await withTimeout(
-      supabase.from('dream_referrals').insert(data).select(),
-      10000,
-      '드림리퍼럴 등록 시간 초과'
+    await ensureValidSession();
+
+    const result = await executeWithRetry(
+      () => supabase.from('dream_referrals').insert(data).select()
     );
     const { error } = result;
     if (error) throw error;
@@ -84,10 +75,10 @@ export const useDreamReferralStore = create((set, get) => ({
   },
 
   updateDreamReferral: async (id, updates) => {
-    const result = await withTimeout(
-      supabase.from('dream_referrals').update(updates).eq('id', id).select().single(),
-      10000,
-      '드림리퍼럴 수정 시간 초과'
+    await ensureValidSession();
+
+    const result = await executeWithRetry(
+      () => supabase.from('dream_referrals').update(updates).eq('id', id).select().single()
     );
     const { data, error } = result;
     if (error) throw error;
@@ -95,6 +86,8 @@ export const useDreamReferralStore = create((set, get) => ({
   },
 
   deleteDreamReferral: async (id) => {
+    await ensureValidSession();
+
     const { error } = await supabase
       .from('dream_referrals')
       .update({ is_active: false })
