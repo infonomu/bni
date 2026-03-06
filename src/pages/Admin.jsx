@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
-import { supabase } from '../lib/supabase';
+import { supabase, isAuthError, ensureValidSession } from '../lib/supabase';
 import { formatPrice } from '../utils/format';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
@@ -45,13 +45,7 @@ export default function Admin() {
     setError(null);
     setLoading(true);
     try {
-      const [
-        settingsResult,
-        productCountResult,
-        orderCountResult,
-        memberCountResult,
-        productsResult
-      ] = await Promise.all([
+      const results = await Promise.allSettled([
         supabase.from('settings').select('*').single(),
         supabase.from('products').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('*', { count: 'exact', head: true }),
@@ -59,15 +53,31 @@ export default function Admin() {
         supabase.from('products').select('*, profiles(name)').order('created_at', { ascending: false })
       ]);
 
-      setSettings(settingsResult.data);
+      const [settingsResult, productCountResult, orderCountResult, memberCountResult, productsResult] =
+        results.map(r => r.status === 'fulfilled' ? r.value : { data: null, error: r.reason });
+
+      // 인증 에러 확인
+      const authErr = results.find(r => r.status === 'fulfilled' && isAuthError(r.value?.error));
+      if (authErr) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
+
+      if (settingsResult.data) setSettings(settingsResult.data);
       setStats({
-        products: productCountResult.count,
-        orders: orderCountResult.count,
-        members: memberCountResult.count
+        products: productCountResult?.count || 0,
+        orders: orderCountResult?.count || 0,
+        members: memberCountResult?.count || 0
       });
-      setProducts(productsResult.data || []);
+      setProducts(productsResult?.data || []);
     } catch (err) {
       console.error('데이터 조회 에러:', err);
+      if (isAuthError(err)) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
       setError('fetch_error');
     } finally {
       setLoading(false);
@@ -126,6 +136,7 @@ export default function Admin() {
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
+      await ensureValidSession();
       const { error } = await supabase
         .from('settings')
         .update(settings)
@@ -134,6 +145,11 @@ export default function Admin() {
       if (error) throw error;
       toast.success('설정이 저장되었습니다');
     } catch (error) {
+      if (isAuthError(error) || error.message?.includes('세션이 만료')) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
       toast.error('설정 저장에 실패했습니다');
     } finally {
       setSaving(false);
@@ -142,16 +158,24 @@ export default function Admin() {
 
   const handleToggleProduct = async (productId, isActive) => {
     try {
-      await supabase
+      await ensureValidSession();
+      const { error } = await supabase
         .from('products')
         .update({ is_active: !isActive })
         .eq('id', productId);
+
+      if (error) throw error;
 
       setProducts(products.map(p =>
         p.id === productId ? { ...p, is_active: !isActive } : p
       ));
       toast.success(isActive ? '상품이 비활성화되었습니다' : '상품이 활성화되었습니다');
     } catch (error) {
+      if (isAuthError(error) || error.message?.includes('세션이 만료')) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
       toast.error('상태 변경에 실패했습니다');
     }
   };
@@ -161,6 +185,7 @@ export default function Admin() {
     setSyncLoading(true);
     setSyncResult(null);
     try {
+      await ensureValidSession();
       const { data: { session } } = await supabase.auth.getSession();
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -188,6 +213,11 @@ export default function Admin() {
       await fetchMemberData();
     } catch (error) {
       console.error('동기화 에러:', error);
+      if (isAuthError(error) || error.message?.includes('세션이 만료')) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
       toast.error(`동기화 실패: ${error.message}`);
       setSyncResult({ error: error.message });
     } finally {
@@ -199,6 +229,8 @@ export default function Admin() {
   const handleRestoreMember = async (profileId) => {
     setRestoringId(profileId);
     try {
+      await ensureValidSession();
+
       // profiles.status → 'active'
       const { error: profileError } = await supabase
         .from('profiles')
@@ -219,6 +251,11 @@ export default function Admin() {
       toast.success('멤버가 복원되었습니다. 상품이 자동으로 재노출됩니다.');
     } catch (error) {
       console.error('복원 에러:', error);
+      if (isAuthError(error) || error.message?.includes('세션이 만료')) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
       toast.error('복원에 실패했습니다');
     } finally {
       setRestoringId(null);
@@ -251,6 +288,11 @@ export default function Admin() {
       toast.success('멤버 매핑이 완료되었습니다');
     } catch (error) {
       console.error('매핑 에러:', error);
+      if (isAuthError(error) || error.message?.includes('세션이 만료')) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
       toast.error('매핑에 실패했습니다');
     } finally {
       setMappingId(null);

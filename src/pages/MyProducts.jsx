@@ -122,6 +122,11 @@ export default function MyProducts() {
                 setProducts(products.filter(p => p.id !== productId));
                 toast.success('상품이 삭제되었습니다');
               } catch (error) {
+                if (isAuthError(error) || error.message?.includes('세션이 만료')) {
+                  toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+                  navigate('/login');
+                  return;
+                }
                 toast.error('삭제에 실패했습니다');
               }
             }}
@@ -156,6 +161,11 @@ export default function MyProducts() {
                 setMyDreams(myDreams.filter(d => d.id !== dreamId));
                 toast.success('드림리퍼럴이 삭제되었습니다');
               } catch (error) {
+                if (isAuthError(error) || error.message?.includes('세션이 만료')) {
+                  toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+                  navigate('/login');
+                  return;
+                }
                 toast.error('삭제에 실패했습니다');
               }
             }}

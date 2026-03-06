@@ -1,13 +1,18 @@
-import { supabase } from '../lib/supabase';
+import { supabase, executeWithRetry, ensureValidSession, isAuthError } from '../lib/supabase';
 
 export const useOrders = () => {
   const createOrder = async (orderData) => {
-    // 주문 생성
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert(orderData)
-      .select()
-      .single();
+    // 세션 사전 검증
+    await ensureValidSession();
+
+    // 주문 생성 (재시도 포함)
+    const { data: order, error: orderError } = await executeWithRetry(
+      () => supabase
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single()
+    );
 
     if (orderError) throw orderError;
 
@@ -28,22 +33,26 @@ export const useOrders = () => {
   };
 
   const getMyOrders = async (buyerId) => {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*, products(name, price, images)')
-      .eq('buyer_id', buyerId)
-      .order('created_at', { ascending: false });
+    const { data, error } = await executeWithRetry(
+      () => supabase
+        .from('orders')
+        .select('*, products(name, price, images)')
+        .eq('buyer_id', buyerId)
+        .order('created_at', { ascending: false })
+    );
 
     if (error) throw error;
     return data;
   };
 
   const getSellerOrders = async (sellerId) => {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*, products!inner(name, price, seller_id)')
-      .eq('products.seller_id', sellerId)
-      .order('created_at', { ascending: false });
+    const { data, error } = await executeWithRetry(
+      () => supabase
+        .from('orders')
+        .select('*, products!inner(name, price, seller_id)')
+        .eq('products.seller_id', sellerId)
+        .order('created_at', { ascending: false })
+    );
 
     if (error) throw error;
     return data;

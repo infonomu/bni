@@ -138,6 +138,9 @@ export const useProductStore = create((set, get) => ({
   },
 
   deleteProduct: async (id) => {
+    // 세션 사전 검증
+    await ensureValidSession();
+
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) throw error;
   },

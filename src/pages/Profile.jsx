@@ -65,7 +65,13 @@ export default function Profile() {
       toast.success('프로필이 저장되었습니다');
       navigate('/my-products');
     } catch (error) {
-      toast.error(error.message || '저장에 실패했습니다');
+      const msg = error.message || '';
+      if (msg.includes('로그인이 필요합니다') || msg.includes('세션이 만료되었습니다') || msg.includes('jwt') || msg.includes('token') || error.code === 'PGRST301' || error.status === 401) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
+      toast.error(msg || '저장에 실패했습니다');
     } finally {
       setSaving(false);
     }
