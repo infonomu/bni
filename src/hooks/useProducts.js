@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase, executeWithRetry, isAuthError } from '../lib/supabase';
+import { supabase, executeWithRetry, isAuthError, ensureValidSession } from '../lib/supabase';
 import { CATEGORIES } from '../utils/constants';
 
 // CATEGORIES는 src/utils/constants.js에서 관리
@@ -9,14 +9,6 @@ export { CATEGORIES };
 // 요청 ID 관리 (race condition 방지)
 let currentFetchId = 0;
 
-// 타임아웃 유틸리티 함수 (타이머 정리 포함)
-const withTimeout = (promise, ms, message) => {
-  let timeoutId;
-  const timeout = new Promise((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(message)), ms);
-  });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
-};
 
 export const useProductStore = create((set, get) => ({
   products: [],
@@ -97,17 +89,16 @@ export const useProductStore = create((set, get) => ({
   },
 
   createProduct: async (product) => {
+    // 세션 사전 검증
+    await ensureValidSession();
+
     try {
-      const result = await withTimeout(
-        executeWithRetry(async () => {
-          return await supabase
-            .from('products')
-            .insert(product)
-            .select();
-        }),
-        30000,
-        '상품 등록 요청 시간 초과'
-      );
+      const result = await executeWithRetry(async () => {
+        return await supabase
+          .from('products')
+          .insert(product)
+          .select();
+      });
 
       const { data, error } = result;
 
@@ -123,19 +114,18 @@ export const useProductStore = create((set, get) => ({
   },
 
   updateProduct: async (id, updates) => {
+    // 세션 사전 검증
+    await ensureValidSession();
+
     try {
-      const result = await withTimeout(
-        executeWithRetry(async () => {
-          return await supabase
-            .from('products')
-            .update(updates)
-            .eq('id', id)
-            .select()
-            .single();
-        }),
-        30000,
-        '상품 수정 요청 시간 초과'
-      );
+      const result = await executeWithRetry(async () => {
+        return await supabase
+          .from('products')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+      });
 
       const { data, error } = result;
 
@@ -153,16 +143,15 @@ export const useProductStore = create((set, get) => ({
   },
 
   uploadImage: async (file, userId) => {
+    // 세션 사전 검증
+    await ensureValidSession();
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
-    const { error: uploadError } = await withTimeout(
-      supabase.storage
-        .from('product-images')
-        .upload(fileName, file),
-      90000,
-      '이미지 업로드 시간 초과'
-    );
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(fileName, file);
 
     if (uploadError) throw uploadError;
 

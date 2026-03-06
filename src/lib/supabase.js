@@ -127,6 +127,27 @@ export const executeWithRetry = async (queryFn, options = {}) => {
   }
 };
 
+// 세션 유효성 검증 + 필요시 갱신
+export const ensureValidSession = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const expiresAt = session.expires_at;
+
+  // 만료됐거나 5분 이내 만료 예정이면 갱신 시도
+  if (expiresAt && expiresAt - now < 300) {
+    const refreshed = await refreshSession();
+    if (!refreshed) {
+      throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');
+    }
+  }
+
+  return session;
+};
+
 // 페이지 visibility 변경 시 세션 체크
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', async () => {
@@ -140,7 +161,10 @@ if (typeof document !== 'undefined') {
         // 5분 이내 만료 예정이면 갱신
         if (expiresAt && expiresAt - now < 300) {
           console.log('세션 만료 임박, 갱신 시도...');
-          await refreshSession();
+          const refreshed = await refreshSession();
+          if (!refreshed) {
+            console.warn('세션 갱신 실패: 다음 작업 시 재로그인이 필요할 수 있습니다.');
+          }
         }
       }
     }
