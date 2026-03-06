@@ -118,8 +118,22 @@ export default function Register() {
       navigate('/my-products');
     } catch (error) {
       console.error('상품 등록 에러:', error);
-      const msg = error.message || '상품 등록에 실패했습니다.';
-      toast.error(msg);
+      const msg = error.message || '';
+      // 세션 만료 관련 에러 감지
+      if (
+        msg.includes('로그인이 필요합니다') ||
+        msg.includes('세션이 만료되었습니다') ||
+        msg.includes('jwt') ||
+        msg.includes('token') ||
+        msg.includes('not authenticated') ||
+        error.code === 'PGRST301' ||
+        error.status === 401
+      ) {
+        toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        navigate('/login');
+        return;
+      }
+      toast.error(msg || '상품 등록에 실패했습니다.');
     } finally {
       setLoading(false);
       setLoadingStep('');
