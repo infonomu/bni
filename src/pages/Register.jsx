@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../hooks/useAuth';
@@ -14,6 +14,16 @@ export default function Register() {
   const { createProduct, uploadImage } = useProductStore();
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState('');
+  const abortControllerRef = useRef(null);
+
+  // 컴포넌트 언마운트 시 진행 중인 작업 취소
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -44,6 +54,16 @@ export default function Register() {
     );
   }
 
+  const handleCancel = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setLoading(false);
+    setLoadingStep('');
+    toast('등록이 취소되었습니다.', { icon: '⚠️' });
+  };
+
   const handleSubmit = async (formData, images, _existingImages) => {
     if (!user) return;
 
@@ -65,6 +85,15 @@ export default function Register() {
       return;
     }
 
+    // AbortController 생성
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    // 90초 글로벌 타임아웃
+    const globalTimeout = setTimeout(() => {
+      controller.abort();
+    }, 90000);
+
     setLoading(true);
     try {
       const imageUrls = [];
@@ -73,23 +102,25 @@ export default function Register() {
         // 1단계: 이미지 압축
         const compressedImages = [];
         for (let i = 0; i < images.length; i++) {
+          if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
           setLoadingStep(`이미지 압축 중... (${i + 1}/${images.length})`);
           try {
             compressedImages.push(await compressImage(images[i]));
           } catch (err) {
+            if (controller.signal.aborted) throw err;
             toast.error(`이미지 "${images[i].name}" 압축 실패: ${err.message}`);
-            setLoading(false);
-            setLoadingStep('');
             return;
           }
         }
 
         // 2단계: 이미지 업로드
         for (let i = 0; i < compressedImages.length; i++) {
+          if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
           setLoadingStep(`이미지 업로드 중... (${i + 1}/${compressedImages.length})`);
           try {
-            imageUrls.push(await uploadImage(compressedImages[i], user.id));
+            imageUrls.push(await uploadImage(compressedImages[i], user.id, { signal: controller.signal }));
           } catch (err) {
+            if (controller.signal.aborted) throw err;
             const errMsg = err.message || '';
             if (errMsg.includes('시간 초과')) {
               toast.error(`이미지 "${images[i].name}" 업로드 시간 초과. 파일 크기를 줄이거나 네트워크를 확인해주세요.`);
@@ -98,14 +129,13 @@ export default function Register() {
             } else {
               toast.error(`이미지 "${images[i].name}" 업로드 실패: ${errMsg}`);
             }
-            setLoading(false);
-            setLoadingStep('');
             return;
           }
         }
       }
 
       // 3단계: 상품 등록
+      if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
       setLoadingStep('상품 등록 중...');
       await createProduct({
         ...formData,
@@ -117,6 +147,17 @@ export default function Register() {
       toast.success('상품이 등록되었습니다!');
       navigate('/my-products');
     } catch (error) {
+      // AbortError (취소 또는 타임아웃)
+      if (error.name === 'AbortError') {
+        if (!abortControllerRef.current) {
+          // 사용자가 수동 취소한 경우 - handleCancel에서 이미 toast 표시
+          return;
+        }
+        // 글로벌 타임아웃에 의한 자동 취소
+        toast.error('요청 시간이 초과되었습니다. 네트워크 상태를 확인하고 다시 시도해주세요.');
+        return;
+      }
+
       console.error('상품 등록 에러:', error);
       const msg = error.message || '';
       // 세션 만료 관련 에러 감지
@@ -135,6 +176,8 @@ export default function Register() {
       }
       toast.error(msg || '상품 등록에 실패했습니다.');
     } finally {
+      clearTimeout(globalTimeout);
+      abortControllerRef.current = null;
       setLoading(false);
       setLoadingStep('');
     }
@@ -164,6 +207,7 @@ export default function Register() {
         onSubmit={handleSubmit}
         loading={loading}
         loadingStep={loadingStep}
+        onCancel={handleCancel}
       />
     </div>
   );

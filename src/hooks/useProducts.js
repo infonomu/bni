@@ -145,9 +145,19 @@ export const useProductStore = create((set, get) => ({
     if (error) throw error;
   },
 
-  uploadImage: async (file, userId) => {
+  uploadImage: async (file, userId, options = {}) => {
+    // 취소 체크
+    if (options.signal?.aborted) {
+      throw new DOMException('Upload cancelled', 'AbortError');
+    }
+
     // 세션 사전 검증
     await ensureValidSession();
+
+    // 취소 체크 (세션 검증 후)
+    if (options.signal?.aborted) {
+      throw new DOMException('Upload cancelled', 'AbortError');
+    }
 
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${Date.now()}.${fileExt}`;

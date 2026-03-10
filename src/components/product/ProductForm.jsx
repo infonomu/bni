@@ -13,6 +13,7 @@ export default function ProductForm({
   loading,
   loadingStep = '',
   isEdit = false,
+  onCancel,
 }) {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
@@ -301,13 +302,24 @@ export default function ProductForm({
       </div>
 
       {/* 제출 버튼 */}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? (loadingStep || '처리 중...') : isEdit ? '수정하기' : '등록하기'}
-      </button>
+      <div className="space-y-3">
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? (loadingStep || '처리 중...') : isEdit ? '수정하기' : '등록하기'}
+        </button>
+        {loading && onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full py-3 bg-white text-brown/70 font-medium rounded-lg border border-brown/20 hover:bg-gray-50 transition-colors"
+          >
+            취소
+          </button>
+        )}
+      </div>
     </form>
   );
 }

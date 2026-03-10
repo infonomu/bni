@@ -8,11 +8,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // 글로벌 fetch 래퍼: 타임아웃 + 자동 재시도 (cold start 대응)
-// Storage 업로드는 120초, 그 외 요청은 30초 타임아웃
+// Storage 업로드는 45초(최대 2회), 그 외 요청은 30초(최대 3회) 타임아웃
 const fetchWithRetry = async (url, options = {}) => {
-  const MAX_RETRIES = 2;
   const isStorageUpload = url.includes('/storage/') && options?.method === 'POST';
-  const TIMEOUT_MS = isStorageUpload ? 120000 : 30000;
+  const MAX_RETRIES = isStorageUpload ? 1 : 2;
+  const TIMEOUT_MS = isStorageUpload ? 45000 : 30000;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const controller = new AbortController();
