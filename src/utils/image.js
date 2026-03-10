@@ -1,74 +1,50 @@
+import imageCompression from 'browser-image-compression';
+
 /**
- * 이미지 압축 함수
+ * 이미지 압축 함수 (browser-image-compression 기반)
+ * - Web Worker에서 처리하여 메인 스레드 블로킹 방지
+ * - EXIF 자동 회전 보정
+ * - 모바일 대용량 이미지 안정적 처리
+ *
  * @param {File} file - 원본 이미지 파일
- * @param {number} maxWidth - 최대 너비 (기본 800px)
- * @param {number} quality - 압축 품질 0-1 (기본 0.6)
+ * @param {Object} options - 추가 옵션
+ * @param {AbortSignal} options.signal - 취소 시그널
+ * @param {Function} options.onProgress - 진행률 콜백 (0~100)
  * @returns {Promise<File>} 압축된 이미지 파일
  */
-export function compressImage(file, maxWidth = 800, quality = 0.6) {
-  return new Promise((resolve, reject) => {
-    // 지원하지 않는 형식 사전 차단 (HEIF/HEIC 등)
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (['heif', 'heic', 'tiff', 'bmp', 'svg'].includes(ext)) {
-      reject(new Error(`${ext.toUpperCase()} 형식은 지원하지 않습니다. JPG, PNG, WebP로 변환해주세요.`));
-      return;
-    }
+export async function compressImage(file, options = {}) {
+  // 지원하지 않는 형식 사전 차단 (HEIF/HEIC 등)
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (['heif', 'heic', 'tiff', 'bmp', 'svg'].includes(ext)) {
+    throw new Error(`${ext.toUpperCase()} 형식은 지원하지 않습니다. JPG, PNG, WebP로 변환해주세요.`);
+  }
 
-    // 이미 작은 파일은 압축하지 않음
-    if (file.size < 500 * 1024) {
-      resolve(file);
-      return;
-    }
+  // 이미 작은 파일은 압축하지 않음 (300KB 이하)
+  if (file.size < 300 * 1024) {
+    console.log(`압축 스킵 (${(file.size / 1024).toFixed(0)}KB, 300KB 이하)`);
+    return file;
+  }
 
-    const timeoutId = setTimeout(() => {
-      reject(new Error('이미지 압축 시간 초과 (30초)'));
-    }, 30000);
+  const compressionOptions = {
+    maxSizeMB: 0.3,           // 최대 300KB
+    maxWidthOrHeight: 800,    // 최대 800px
+    useWebWorker: true,       // Web Worker 사용 (메인 스레드 블로킹 방지)
+    fileType: 'image/jpeg',   // JPEG 출력
+    initialQuality: 0.7,      // 초기 품질
+    signal: options.signal,   // AbortController signal
+    onProgress: options.onProgress,
+  };
 
-    const reader = new FileReader();
-    reader.onerror = () => {
-      clearTimeout(timeoutId);
-      reject(new Error('이미지 파일을 읽을 수 없습니다'));
-    };
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => {
-        clearTimeout(timeoutId);
-        reject(new Error('이미지를 로드할 수 없습니다'));
-      };
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let { width, height } = img;
+  try {
+    const compressedFile = await imageCompression(file, compressionOptions);
+    console.log(`압축: ${(file.size / 1024).toFixed(0)}KB → ${(compressedFile.size / 1024).toFixed(0)}KB`);
+    return compressedFile;
+  } catch (err) {
+    // 취소된 경우 그대로 throw
+    if (err.name === 'AbortError') throw err;
 
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            clearTimeout(timeoutId);
-            if (!blob) {
-              reject(new Error('이미지 압축에 실패했습니다'));
-              return;
-            }
-            const compressedFile = new File([blob], file.name, {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
-            console.log(`압축: ${(file.size / 1024).toFixed(0)}KB → ${(compressedFile.size / 1024).toFixed(0)}KB`);
-            resolve(compressedFile);
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+    // 라이브러리 압축 실패 시 원본 파일 반환 (업로드는 시도)
+    console.warn('이미지 압축 실패, 원본 사용:', err.message);
+    return file;
+  }
 }

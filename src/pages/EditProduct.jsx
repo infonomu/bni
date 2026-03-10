@@ -87,7 +87,7 @@ export default function EditProduct() {
           if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
           setLoadingStep(`이미지 압축 중... (${i + 1}/${newImages.length})`);
           try {
-            compressedImages.push(await compressImage(newImages[i]));
+            compressedImages.push(await compressImage(newImages[i], { signal: controller.signal }));
           } catch (err) {
             if (controller.signal.aborted) throw err;
             toast.error(`이미지 "${newImages[i].name}" 압축 실패: ${err.message}`);

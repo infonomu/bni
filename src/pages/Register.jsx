@@ -105,7 +105,7 @@ export default function Register() {
           if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
           setLoadingStep(`이미지 압축 중... (${i + 1}/${images.length})`);
           try {
-            compressedImages.push(await compressImage(images[i]));
+            compressedImages.push(await compressImage(images[i], { signal: controller.signal }));
           } catch (err) {
             if (controller.signal.aborted) throw err;
             toast.error(`이미지 "${images[i].name}" 압축 실패: ${err.message}`);
